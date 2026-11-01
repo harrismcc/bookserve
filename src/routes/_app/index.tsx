@@ -1,24 +1,16 @@
-import { createFileRoute, useRouter } from '@tanstack/react-router'
-
-import { Button } from '#/components/ui/button'
-import { authClient } from '#/lib/auth-client'
+import { createFileRoute } from '@tanstack/react-router'
+import { BookOpen } from 'lucide-react'
 
 export const Route = createFileRoute('/_app/')({ component: Library })
 
 function Library() {
-  const router = useRouter()
-
-  async function signOut() {
-    await authClient.signOut()
-    await router.invalidate()
-  }
-
   return (
-    <main className="flex items-center justify-between p-8">
+    <main className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="text-2xl font-semibold">Library</h1>
-      <Button variant="outline" onClick={signOut}>
-        Sign out
-      </Button>
+      <div className="mt-6 flex min-h-72 flex-col items-center justify-center gap-3 rounded-lg border border-dashed text-muted-foreground">
+        <BookOpen className="size-8" />
+        <p className="text-sm">No books yet</p>
+      </div>
     </main>
   )
 }
