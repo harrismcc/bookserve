@@ -28,10 +28,10 @@ First boot shows a setup screen that creates the admin. After that, signed-in us
 - `/login`. Every app route requires a session.
 - Dockerfile (multi-arch, `better-sqlite3` native build) plus a `.dockerignore`.
 
-### Phase 2 — App shell and user management — status: not started
+### Phase 2 — App shell and user management — status: done
 
 - Layout with Library (`/`) and Settings (`/settings`) navigation, plus sign-out.
-- `/settings/users` (admin only): list, add (username, password, role), delete, reset password.
+- `/settings/users` (admin only): list, add (username, password, role), change role, delete, reset password.
 
 ### Phase 3 — Library scanning and the grid view — status: not started
 
@@ -76,3 +76,15 @@ Append short notes here: gotchas, conventions established, verification commands
   # curl -s -o /dev/null -w '%{http_code} %{redirect_url}' localhost:3100/  -> 307 .../setup. Create the admin in a browser; /setup then redirects to /.
   ```
   Docker: `docker build -t bookserve:dev .`, then `docker run --rm -p 3200:3000 -v $T/config:/config -v $T/books:/books bookserve:dev`.
+
+### Phase 2
+
+- **Shell:** `src/routes/_app.tsx` renders the top bar (Bookserve, nav, user menu with sign-out) around an `<Outlet />` for every `_app` route. Add top-level nav items to its `navItems` array; `admin: true` hides an item from non-admins (UI only), `exact: true` for `/`. Pages render their own `<main className="mx-auto max-w-6xl px-4 py-8">` with an `h1`. Active links are styled with `data-[status=active]:` classes (TanStack `Link` sets `data-status`); `activeProps` classes lose to `text-muted-foreground` in the base class.
+- **Styles:** `src/styles.css` is plain shadcn zinc tokens on `bg-background` (template gradient, colors and helper classes removed). `.dark` tokens are kept, but nothing sets the class yet.
+- **Settings:** `src/routes/_app/settings/route.tsx` is the admin-only layout (redirects non-admins to `/`) with the side nav; add a section by adding a route file under `src/routes/_app/settings/` and an entry in its `sections` array. `/settings` redirects to `/settings/users`.
+- **Admin server functions:** `src/lib/user-functions.ts`. Every admin handler starts with `const { headers, session } = await requireAdmin()` (a `createServerOnlyFn`; throws `Forbidden` without an admin session) and passes `headers` to `auth.api.*`. Validators reuse `checkUsername`/`checkPassword` from `src/lib/credentials.ts` (also used by `/setup`). Errors are thrown as plain `Error`s and shown inline by the UI.
+- **Guards:** `setRole` and `removeUser` refuse acting on yourself and demoting/removing the last admin (last-admin is checked first, so a sole admin gets that message). Better Auth's raw `/api/auth/admin/{set-role,update-user,remove-user}` endpoints are closed via `disabledPaths` in `src/lib/auth.ts` so they can't bypass these guards; `auth.api.*` calls still work. If you add another way to change roles or delete users, put it in `user-functions.ts`.
+- **Server-fn CSRF:** TanStack Start rejects server-function requests without a same-origin `Origin`/`Sec-Fetch-Site`/`Referer` with `403 Forbidden`. When replaying one with curl, send `-H 'origin: http://localhost:<port>' -H 'x-tsr-serverfn: true'`. A thrown error comes back as HTTP 200 with a serialized `$TSR/Error` body.
+- **Dates in SSR'd tables:** format deterministically (the users table shows `createdAt` as `YYYY-MM-DD` from an ISO string) to avoid server/browser locale hydration mismatches.
+- **shadcn:** `shadcn add` prompts to overwrite `button.tsx` (answer no: `--yes` does not skip that prompt, and a non-interactive run stops before writing the remaining components) and rewrites imports to `#/lib/utils.ts`/`#/components/ui/button.tsx`; fix those along with the `cn` gotcha above.
+- **Verification (Phase 2):** `pnpm lint`, `pnpm typecheck`, `pnpm build`, then the fresh-boot test on port 3100 with a Playwright script (run from a temp dir under `.amp/in/`, not a dependency): setup admin → add `reader` (user) and `admin2` (admin) → invalid/duplicate username errors inline → demote/promote → reset password and log in as `reader` with it (old password rejected) → reader has no Settings link and `/settings`, `/settings/users` redirect to `/` → delete with confirmation → replayed server-fn calls: self-demote/self-delete and last-admin demote/delete rejected; `listUsers`/`removeUser` with the reader's cookie via curl return `Forbidden`; `POST /api/auth/admin/{set-role,remove-user,update-user}` → 404.
