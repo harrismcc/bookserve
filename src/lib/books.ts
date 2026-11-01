@@ -18,7 +18,12 @@ export type BookMetadata = {
 }
 
 // Overrides stored in books.matched; any field set here wins over the scanned one.
-export type MatchedMetadata = Partial<BookMetadata> & { coverPath?: string }
+// pageCount only comes from matching. `source` records where the last match came from.
+export type MatchedMetadata = Partial<BookMetadata> & {
+  pageCount?: number
+  coverPath?: string
+  source?: { provider: string; id: string; matchedAt: string }
+}
 
 type BookRow = typeof books.$inferSelect
 
@@ -44,6 +49,7 @@ export function bookView(row: BookRow) {
     isbn: m.isbn ?? row.isbn,
     series: m.series ?? row.series,
     seriesIndex: m.seriesIndex ?? row.seriesIndex,
+    pageCount: m.pageCount ?? null,
     coverPath: m.coverPath ?? row.coverPath,
     missing: row.missing,
     updatedAt: row.updatedAt,

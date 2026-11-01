@@ -49,7 +49,11 @@ export const getBook = createServerFn({ method: 'GET' })
     const row = db.select().from(books).where(eq(books.id, bookId)).get()
     if (!row) return null
     const { coverPath, updatedAt, sortTitle, ...book } = bookView(row)
-    return { ...book, coverUrl: coverUrl({ ...book, coverPath, updatedAt }) }
+    return {
+      ...book,
+      coverUrl: coverUrl({ ...book, coverPath, updatedAt }),
+      matched: row.matched != null,
+    }
   })
 
 export const scanLibraryNow = createServerFn({ method: 'POST' }).handler(

@@ -12,4 +12,5 @@ export const config = {
   // Committed migrations; the server runs from the repo root (or /app in the image).
   migrationsDir: path.resolve('drizzle'),
   publicUrl: process.env.BOOKSERVE_URL || undefined,
+  googleBooksApiKey: process.env.GOOGLE_BOOKS_API_KEY || undefined,
 }

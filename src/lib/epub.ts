@@ -223,9 +223,9 @@ function decodeEntities(s: string) {
   })
 }
 
-// OPF descriptions are often (escaped) HTML. Reduce them to plain text with
-// paragraph breaks; the UI renders the result as text, never as HTML.
-function htmlToText(html: string) {
+// OPF descriptions (and Google Books ones) are often (escaped) HTML. Reduce them
+// to plain text with paragraph breaks; the UI renders the result as text, never as HTML.
+export function htmlToText(html: string) {
   return decodeEntities(
     decodeEntities(html)
       .replace(/<(script|style)[\s\S]*?<\/\1>/gi, '')
