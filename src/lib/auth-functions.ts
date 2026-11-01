@@ -4,6 +4,7 @@ import { getRequestHeaders } from '@tanstack/react-start/server'
 import { db } from '#/db'
 import { user } from '#/db/schema'
 import { auth, syntheticEmail } from '#/lib/auth'
+import { checkPassword, checkUsername } from '#/lib/credentials'
 
 function hasUsers() {
   return db.select({ id: user.id }).from(user).limit(1).get() !== undefined
@@ -24,15 +25,8 @@ type Credentials = { username: string; password: string }
 // Creates the first user as admin and signs them in. Refuses once any user exists.
 export const setupAdmin = createServerFn({ method: 'POST' })
   .validator((data: Credentials) => {
-    // Same rule as the username plugin; checked first so the synthetic email is always valid.
-    if (!/^[a-zA-Z0-9_.]{3,30}$/.test(data.username)) {
-      throw new Error(
-        'Username must be 3–30 letters, numbers, underscores, or dots',
-      )
-    }
-    if (data.password.length < 8) {
-      throw new Error('Password must be at least 8 characters')
-    }
+    checkUsername(data.username)
+    checkPassword(data.password)
     return data
   })
   .handler(async ({ data }) => {

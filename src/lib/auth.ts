@@ -38,6 +38,14 @@ export const auth = betterAuth({
     enabled: true,
     disableSignUp: true,
   },
+  // Role changes and deletes go through the server functions in src/lib/user-functions.ts,
+  // which refuse self-demotion/self-deletion and removing the last admin. Close the raw
+  // HTTP endpoints that could bypass those guards (auth.api calls are unaffected).
+  disabledPaths: [
+    '/admin/set-role',
+    '/admin/update-user',
+    '/admin/remove-user',
+  ],
   plugins: [username(), admin(), tanstackStartCookies()],
 })
 
