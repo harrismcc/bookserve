@@ -1,0 +1,47 @@
+src/components/match-dialog.tsx
+  s_f7cebd6d944d6d::t_354f6b4d02330b 114-115,118-121
+src/lib/metadata/open-library.ts
+  s_50f85b5018273c::t_431a0200702374 63-86
+  s_c742bf332d54a4::t_26d04f3096210c 50,87,101
+  s_8c7a0089f02b2a::t_decba9177df064 14-18,28-30,37,43-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2cfb5ffdf36664ad22e2ed686cf411226bf34843",
+  "prompts": {},
+  "sessions": {
+    "s_50f85b5018273c": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qI3xuOFD2aNzA43bYoc",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_8c7a0089f02b2a": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qI3jO44kbAfEVFaes4N",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_c742bf332d54a4": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qIljqPZZt2CotGlZmqn",
+        "model": "unknown"
+      },
+      "human_author": null
+    },
+    "s_f7cebd6d944d6d": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qI1Co1QaSQqjAR0dBCJ",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    }
+  }
+}
