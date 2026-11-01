@@ -1,10 +1,23 @@
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
+import {
+  HeadContent,
+  Scripts,
+  createRootRoute,
+  redirect,
+} from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
+import { getAuthState } from '#/lib/auth-functions'
 import appCss from '../styles.css?url'
 
 export const Route = createRootRoute({
+  beforeLoad: async ({ location }) => {
+    const authState = await getAuthState()
+    if (!authState.hasUsers && location.pathname !== '/setup') {
+      throw redirect({ to: '/setup' })
+    }
+    return authState
+  },
   head: () => ({
     meta: [
       {
@@ -15,7 +28,7 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'TanStack Start Starter',
+        title: 'Bookserve',
       },
     ],
     links: [
