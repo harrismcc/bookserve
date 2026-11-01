@@ -14,9 +14,13 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppSettingsRouteRouteImport } from './routes/_app/settings/route'
+import { Route as AppBooksBookIdRouteImport } from './routes/_app/books/$bookId'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppSettingsUsersRouteImport } from './routes/_app/settings/users'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiBooksUploadRouteImport } from './routes/api/books/upload'
+import { Route as ApiBooksBookIdCoverRouteImport } from './routes/api/books/$bookId/cover'
+import { Route as ApiBooksBookIdDownloadRouteImport } from './routes/api/books/$bookId/download'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -42,6 +46,11 @@ const AppSettingsRouteRoute = AppSettingsRouteRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
+const AppBooksBookIdRoute = AppBooksBookIdRouteImport.update({
+  id: '/books/$bookId',
+  path: '/books/$bookId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -57,23 +66,46 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiBooksUploadRoute = ApiBooksUploadRouteImport.update({
+  id: '/api/books/upload',
+  path: '/api/books/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBooksBookIdCoverRoute = ApiBooksBookIdCoverRouteImport.update({
+  id: '/api/books/$bookId/cover',
+  path: '/api/books/$bookId/cover',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBooksBookIdDownloadRoute = ApiBooksBookIdDownloadRouteImport.update({
+  id: '/api/books/$bookId/download',
+  path: '/api/books/$bookId/download',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
   '/setup': typeof SetupRoute
   '/settings': typeof AppSettingsRouteRouteWithChildren
+  '/books/$bookId': typeof AppBooksBookIdRoute
   '/settings/users': typeof AppSettingsUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/books/upload': typeof ApiBooksUploadRoute
   '/settings/': typeof AppSettingsIndexRoute
+  '/api/books/$bookId/cover': typeof ApiBooksBookIdCoverRoute
+  '/api/books/$bookId/download': typeof ApiBooksBookIdDownloadRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/setup': typeof SetupRoute
   '/': typeof AppIndexRoute
+  '/books/$bookId': typeof AppBooksBookIdRoute
   '/settings/users': typeof AppSettingsUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/books/upload': typeof ApiBooksUploadRoute
   '/settings': typeof AppSettingsIndexRoute
+  '/api/books/$bookId/cover': typeof ApiBooksBookIdCoverRoute
+  '/api/books/$bookId/download': typeof ApiBooksBookIdDownloadRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -82,9 +114,13 @@ export interface FileRoutesById {
   '/setup': typeof SetupRoute
   '/_app/settings': typeof AppSettingsRouteRouteWithChildren
   '/_app/': typeof AppIndexRoute
+  '/_app/books/$bookId': typeof AppBooksBookIdRoute
   '/_app/settings/users': typeof AppSettingsUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/books/upload': typeof ApiBooksUploadRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
+  '/api/books/$bookId/cover': typeof ApiBooksBookIdCoverRoute
+  '/api/books/$bookId/download': typeof ApiBooksBookIdDownloadRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -93,12 +129,25 @@ export interface FileRouteTypes {
     | '/login'
     | '/setup'
     | '/settings'
+    | '/books/$bookId'
     | '/settings/users'
     | '/api/auth/$'
+    | '/api/books/upload'
     | '/settings/'
+    | '/api/books/$bookId/cover'
+    | '/api/books/$bookId/download'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/login' | '/setup' | '/' | '/settings/users' | '/api/auth/$' | '/settings'
+    | '/login'
+    | '/setup'
+    | '/'
+    | '/books/$bookId'
+    | '/settings/users'
+    | '/api/auth/$'
+    | '/api/books/upload'
+    | '/settings'
+    | '/api/books/$bookId/cover'
+    | '/api/books/$bookId/download'
   id:
     | '__root__'
     | '/_app'
@@ -106,9 +155,13 @@ export interface FileRouteTypes {
     | '/setup'
     | '/_app/settings'
     | '/_app/'
+    | '/_app/books/$bookId'
     | '/_app/settings/users'
     | '/api/auth/$'
+    | '/api/books/upload'
     | '/_app/settings/'
+    | '/api/books/$bookId/cover'
+    | '/api/books/$bookId/download'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -116,6 +169,9 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SetupRoute: typeof SetupRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiBooksUploadRoute: typeof ApiBooksUploadRoute
+  ApiBooksBookIdCoverRoute: typeof ApiBooksBookIdCoverRoute
+  ApiBooksBookIdDownloadRoute: typeof ApiBooksBookIdDownloadRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -155,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/books/$bookId': {
+      id: '/_app/books/$bookId'
+      path: '/books/$bookId'
+      fullPath: '/books/$bookId'
+      preLoaderRoute: typeof AppBooksBookIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings/': {
       id: '/_app/settings/'
       path: '/'
@@ -176,6 +239,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/books/upload': {
+      id: '/api/books/upload'
+      path: '/api/books/upload'
+      fullPath: '/api/books/upload'
+      preLoaderRoute: typeof ApiBooksUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/books/$bookId/cover': {
+      id: '/api/books/$bookId/cover'
+      path: '/api/books/$bookId/cover'
+      fullPath: '/api/books/$bookId/cover'
+      preLoaderRoute: typeof ApiBooksBookIdCoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/books/$bookId/download': {
+      id: '/api/books/$bookId/download'
+      path: '/api/books/$bookId/download'
+      fullPath: '/api/books/$bookId/download'
+      preLoaderRoute: typeof ApiBooksBookIdDownloadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -195,11 +279,13 @@ const AppSettingsRouteRouteWithChildren =
 interface AppRouteChildren {
   AppSettingsRouteRoute: typeof AppSettingsRouteRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
+  AppBooksBookIdRoute: typeof AppBooksBookIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppSettingsRouteRoute: AppSettingsRouteRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
+  AppBooksBookIdRoute: AppBooksBookIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -209,6 +295,9 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SetupRoute: SetupRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiBooksUploadRoute: ApiBooksUploadRoute,
+  ApiBooksBookIdCoverRoute: ApiBooksBookIdCoverRoute,
+  ApiBooksBookIdDownloadRoute: ApiBooksBookIdDownloadRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
