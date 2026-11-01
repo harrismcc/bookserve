@@ -111,9 +111,14 @@ function MatchFlow({ book, onDone }: { book: Book; onDone: () => void }) {
   }
 
   const entries = Object.entries(results) as Array<[ProviderId, ProviderResult]>
-  const candidates = entries.flatMap(([, r]) =>
+  // Interleaved, so each provider's best matches are near the top.
+  const lists = entries.map(([, r]) =>
     r.status === 'done' ? r.candidates : [],
   )
+  const candidates = Array.from(
+    { length: Math.max(0, ...lists.map((l) => l.length)) },
+    (_, i) => lists.flatMap((l) => (i < l.length ? [l[i]] : [])),
+  ).flat()
   const pending = entries.some(([, r]) => r.status === 'pending')
 
   return (
