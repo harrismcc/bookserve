@@ -1,0 +1,19 @@
+docs/plan.md
+  s_2e15b0904eb15e::t_8a26659a83f18b 43,50,111-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e62303749e6ce164a7e5e1a788c699b4585d570f",
+  "prompts": {},
+  "sessions": {
+    "s_2e15b0904eb15e": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qIs1mwKTt5jgy7M8jUV",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    }
+  }
+}
