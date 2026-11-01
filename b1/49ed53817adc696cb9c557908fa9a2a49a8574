@@ -1,0 +1,28 @@
+docs/plan.md
+  s_e881fb512cbc87::t_2955b904d4bc79 36,91-94,96-110
+  s_1e03c634331fca::t_8a83c450cae9e3 95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b149ed53817adc696cb9c557908fa9a2a49a8574",
+  "prompts": {},
+  "sessions": {
+    "s_1e03c634331fca": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qH8ysM1oO0THRjzVsZ0",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_e881fb512cbc87": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qH8akEMw5JY317kq8Pv",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    }
+  }
+}
