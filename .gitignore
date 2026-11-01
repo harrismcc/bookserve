@@ -11,3 +11,6 @@ dist-ssr
 .vinxi
 __unconfig*
 todos.json
+
+# Bookserve data (dev default BOOKSERVE_DATA_DIR)
+/data/
