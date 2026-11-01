@@ -1,0 +1,39 @@
+.dockerignore
+  s_21ed08f74b84a2::t_d13038d75ce29f 1-12
+Dockerfile
+  s_998e036beb00fe::t_20c93c2e110302 1-28
+README.md
+  s_be33559f2f63c2::t_b3f5a077c3829b 1,3,5,8-12,15,17-23,25,28-29,32,35,37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "08659988619d817568f02cf8f4bf9dea4356b0f0",
+  "prompts": {},
+  "sessions": {
+    "s_21ed08f74b84a2": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGOQHwk6SNfRe83sFm3",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_998e036beb00fe": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGOOJzqm6xxJuiop3rF",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_be33559f2f63c2": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGQ2qHhITp3Z45hnSYy",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    }
+  }
+}
