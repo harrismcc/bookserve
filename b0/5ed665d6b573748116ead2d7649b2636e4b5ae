@@ -1,0 +1,28 @@
+AGENTS.md
+  s_08fc9abf882fb2::t_5636b95fbc9e7a 103
+  s_1f821e9faa73cb::t_7f2f9b9e2877ea 56-63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b05ed665d6b573748116ead2d7649b2636e4b5ae",
+  "prompts": {},
+  "sessions": {
+    "s_08fc9abf882fb2": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qFcu4hRqqLSVbXjo1qF",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_1f821e9faa73cb": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qFctVzxyS7O4OEbgroV",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    }
+  }
+}
