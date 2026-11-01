@@ -1,0 +1,19 @@
+src/styles.css
+  s_8da402c5a39f46::t_19af4c674dff17 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "353e529dacfb7d97237fc6da46077315fb47d0b7",
+  "prompts": {},
+  "sessions": {
+    "s_8da402c5a39f46": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGW1XYnLNMwh8mdjykE",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    }
+  }
+}
