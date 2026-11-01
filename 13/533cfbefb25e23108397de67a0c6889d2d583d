@@ -1,0 +1,138 @@
+src/components/ui/button.tsx
+  s_6c7bb1e2539e56::t_e8fc3db5090f90 1-5,12,14,16,18,20-21,24,26-31,35-36,38,43-44,47,51
+  s_f6ec093883f59c::t_36df41fec94fde 6-11,13,15,17,19,22-23,25,32-34,37,39-42,45-46,48-50,52-64
+src/routes/__root.tsx
+  s_15d9778fda4e88::t_68f51d95b6e0d1 1-6,10,14-20,31
+src/components/ui/card.tsx
+  s_f6ec093883f59c::t_36df41fec94fde 3,5-8,11-16,18-21,24-29,31-33,35-39,41-43,45-49,51-54,57-62,64-66,68-72,74-76,78-91
+  s_6c7bb1e2539e56::t_e8fc3db5090f90 1-2,4,9-10,17,22-23,30,34,40,44,50,55-56,63,67,73,77
+src/lib/auth-functions.ts
+  s_1d81c71e427781::t_f550272a3ec737 27-32
+  s_3a1c21fbf4c055::t_d8d0389855bb84 1-26,33-53
+src/routes/login.tsx
+  s_e78524eb4a45e3::t_42e83a781cf961 1-77
+package.json
+  s_f6ec093883f59c::t_36df41fec94fde 37
+src/routes/_app.tsx
+  s_9b33f93c438613::t_e83309c07b6584 1-10
+src/components/ui/input.tsx
+  s_f6ec093883f59c::t_36df41fec94fde 3,5-9,14-20
+  s_6c7bb1e2539e56::t_e8fc3db5090f90 1-2,4,10-13
+src/routes/setup.tsx
+  s_1e6738334b1be4::t_cbdb7f96930918 1-91
+src/routes/_app/index.tsx
+  s_a2ccaa58f8960c::t_bb6f39b189cd43 1-24
+src/components/ui/label.tsx
+  s_6c7bb1e2539e56::t_e8fc3db5090f90 1-3,13-14
+  s_f6ec093883f59c::t_36df41fec94fde 4-12,15-21
+src/lib/auth-client.ts
+  s_b89f16a54846ff::t_48c8539facb26e 1,4
+pnpm-lock.yaml
+  s_bc39aeaf7e5253::t_12fef3d8c47e77 50-52,718-732,1028-1029,1031-1032,1034-1045,1047-1058,1060-1071,1073-1084,1086-1097,1099-1110,1112-1123,1125-1136,1138-1149,1151-1158,1160-1171,1173-1180,1182-1193,1195-1202,1204-1205,1207-1215,1217-1218,1220-1228,1230-1231,1233-1237,1239-1240,1242-1250,1252-1253,1255-1263,1265-1266,1268-1276,1278-1285,1287-1298,1300-1311,1313-1324,1326-1337,1339-1867,2219-2222,2419-2421,2610-2613,2967-2979,2989-3018,3293-3312,3726-3914,3917,3920,3923-3928,3931,3934,3937,3940-3944,3947,3950,3953,3956,3959,3962,3965,3968,3971,3974,3977,3980,3983,3986,3989,3992,3995,3998,4001-4005,4007-4012,4014-4031,4033-4042,4044-4051,4053-4060,4062,4064-4074,4076,4078-4089,4091-4105,4107,4109-4118,4120-4124,4126-4137,4139,4141-4143,4145-4168,4170-4172,4174,4176-4185,4187-4200,4202-4206,4208-4217,4219-4231,4233-4249,4251-4256,4258-4265,4267-4291,4293-4309,4311-4332,4334-4352,4354-4368,4370-4392,4394-4410,4412-4420,4422-4429,4431-4438,4440,4442-4448,4450-4465,4467-4484,4486-4502,4504-4531,4533-4540,4542-4558,4560-4565,4567-4579,4581-4595,4597-4615,4617-4630,4632-4641,4643-4656,4658-4678,4680-4685,4687-4694,4696-4701,4703-4708,4710-4714,4716-4720,4722-4726,4728-4733,4735-4740,4742-4751,5269-5272,5405-5406,5546-5547,5885-5947,5960-5986,6109,6164-6178
+src/routeTree.gen.ts
+  s_ffdf57a1db4dd7::t_91c9ba2f4f474f 12-15,18-32,35,44-46,50-52,57-60,65,67-68,72-74,80-82,84-91,94-107,118-127,129-131
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "13533cfbefb25e23108397de67a0c6889d2d583d",
+  "prompts": {},
+  "sessions": {
+    "s_15d9778fda4e88": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGG0asNrl1eT5UWyAML",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_1d81c71e427781": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGFi8Yemi4zHHnio9Jo",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_1e6738334b1be4": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGGHpqGo54bKDyd0ylX",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_3a1c21fbf4c055": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGFUD4r8cwyhGnuCuq5",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_6c7bb1e2539e56": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGH8MMSFbT1Bmhq5U5g",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_9b33f93c438613": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGGTmszQzYv0OdzuMxw",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_a2ccaa58f8960c": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGGXZuT1xBvMQ0Oj5yj",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_b89f16a54846ff": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGFiBHn7XX99dZEmabM",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_bc39aeaf7e5253": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGFFpcbWU57Chk4sZOG",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_e78524eb4a45e3": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGGRFABYPhpyBdCrGD2",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_f6ec093883f59c": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGEvGO5f8TaTkaZetd1",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_ffdf57a1db4dd7": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGGYcvjMPwJATDboYC6",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    }
+  }
+}
