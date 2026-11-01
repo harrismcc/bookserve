@@ -1,9 +1,23 @@
-import { createFileRoute, notFound } from '@tanstack/react-router'
-import { Download } from 'lucide-react'
+import { useState } from 'react'
+import { createFileRoute, notFound, useRouter } from '@tanstack/react-router'
+import { Download, RotateCcw, SearchCheck } from 'lucide-react'
 
 import { BookCover } from '#/components/book-cover'
+import { MatchDialog } from '#/components/match-dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '#/components/ui/alert-dialog'
 import { Button } from '#/components/ui/button'
 import { getBook } from '#/lib/book-functions'
+import { revertMatch } from '#/lib/match-functions'
+import { languageName } from '#/lib/utils'
 
 export const Route = createFileRoute('/_app/books/$bookId')({
   loader: async ({ params }) => {
@@ -17,21 +31,15 @@ export const Route = createFileRoute('/_app/books/$bookId')({
   component: Book,
 })
 
-function languageName(code: string) {
-  try {
-    return new Intl.DisplayNames(['en'], { type: 'language' }).of(code) ?? code
-  } catch {
-    return code
-  }
-}
-
 function Book() {
   const book = Route.useLoaderData()
+  const { user } = Route.useRouteContext()
   const details = [
     ['Publisher', book.publisher],
     ['Published', book.publishedDate],
     ['ISBN', book.isbn],
     ['Language', book.language && languageName(book.language)],
+    ['Pages', book.pageCount && String(book.pageCount)],
   ].filter((entry): entry is [string, string] => Boolean(entry[1]))
 
   return (
@@ -50,7 +58,7 @@ function Book() {
             {book.seriesIndex != null && ` #${book.seriesIndex}`}
           </p>
         )}
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap gap-3">
           {book.missing ? (
             <Button disabled>File missing</Button>
           ) : (
@@ -61,6 +69,7 @@ function Book() {
               </a>
             </Button>
           )}
+          {user.role === 'admin' && <AdminActions book={book} />}
         </div>
         {book.description && (
           <p className="mt-8 max-w-prose text-sm leading-relaxed whitespace-pre-line">
@@ -79,5 +88,63 @@ function Book() {
         )}
       </div>
     </main>
+  )
+}
+
+function AdminActions({
+  book,
+}: {
+  book: ReturnType<typeof Route.useLoaderData>
+}) {
+  const router = useRouter()
+  const [matching, setMatching] = useState(false)
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState('')
+
+  async function revert(event: React.MouseEvent) {
+    // Keep the dialog open until the request finishes so errors show inline.
+    event.preventDefault()
+    setPending(true)
+    setError('')
+    try {
+      await revertMatch({ data: book.id })
+      await router.invalidate()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Request failed')
+    } finally {
+      setPending(false)
+    }
+  }
+
+  return (
+    <>
+      <Button variant="outline" onClick={() => setMatching(true)}>
+        <SearchCheck />
+        Match
+      </Button>
+      <MatchDialog book={book} open={matching} onOpenChange={setMatching} />
+      {book.matched && (
+        <AlertDialog onOpenChange={() => setError('')}>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost">
+              <RotateCcw />
+              Revert to file metadata
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Revert to file metadata?</AlertDialogTitle>
+            </AlertDialogHeader>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={revert} disabled={pending}>
+                Revert
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+    </>
   )
 }
