@@ -1,0 +1,65 @@
+README.md
+  s_e74bd6daec5756::t_24033057018f70 52
+  s_0b8edc79c18b3e::t_5381e43df8e9e0 55
+AGENTS.md
+  s_52bf3ea4dd15f2::t_e236ec6ea45e0e 17
+  s_7ba3ae6de533e7::t_64f8af7b1edf03 1-16,18-49
+  s_ef04d6eca623e0::t_a6738d4b17e19c 50-53,55-104
+  s_c62e500db24d50::t_dfc0a0e078210f 54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a4c53c08269034d4aec883a7c55137f7a2e70707",
+  "prompts": {},
+  "sessions": {
+    "s_0b8edc79c18b3e": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qFWKlDAPlKNrUnOnHkW",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_52bf3ea4dd15f2": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qFIkTGVeAvYYhZl6O5s",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_7ba3ae6de533e7": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qFIHTXO4KiNQ1vMiYtB",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_c62e500db24d50": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qFXc7oO9UGmWpnid7we",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_e74bd6daec5756": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qFWKkKml6sqMe5WQwop",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_ef04d6eca623e0": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qFQZy3Eoo8apgGLSZ2j",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    }
+  }
+}
