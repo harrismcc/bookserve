@@ -1,5 +1,13 @@
 import { sql } from 'drizzle-orm'
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import {
+  index,
+  integer,
+  real,
+  sqliteTable,
+  text,
+} from 'drizzle-orm/sqlite-core'
+
+import type { MatchedMetadata } from '#/lib/books'
 
 // Better Auth tables (core + `username` and `admin` plugins).
 // Keep in sync with the plugins configured in src/lib/auth.ts.
@@ -95,4 +103,69 @@ export const verification = sqliteTable(
       .notNull(),
   },
   (table) => [index('verification_identifier_idx').on(table.identifier)],
+)
+
+// Library. A book's columns hold metadata read from its file and are owned by the
+// scanner, which overwrites them whenever the file changes. Metadata from other
+// sources (Phase 4 matching) goes in `matched` and wins field by field when read
+// (see bookView in src/lib/books.ts), so a rescan never clobbers a match.
+export const books = sqliteTable(
+  'books',
+  {
+    id: text('id').primaryKey(),
+    title: text('title').notNull(),
+    sortTitle: text('sort_title').notNull(),
+    authors: text('authors', { mode: 'json' })
+      .$type<string[]>()
+      .default(sql`'[]'`)
+      .notNull(),
+    description: text('description'),
+    language: text('language'),
+    publisher: text('publisher'),
+    publishedDate: text('published_date'),
+    isbn: text('isbn'),
+    series: text('series'),
+    seriesIndex: real('series_index'),
+    // Relative to the data dir, e.g. covers/<id>.jpg.
+    coverPath: text('cover_path'),
+    matched: text('matched', { mode: 'json' }).$type<MatchedMetadata>(),
+    // No file for this book was found by the last complete scan. Rows are kept.
+    missing: integer('missing', { mode: 'boolean' }).default(false).notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [index('books_sort_title_idx').on(table.sortTitle)],
+)
+
+export const bookFiles = sqliteTable(
+  'book_files',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    bookId: text('book_id')
+      .notNull()
+      .references(() => books.id, { onDelete: 'cascade' }),
+    // Relative to the library dir, with forward slashes.
+    path: text('path').notNull().unique(),
+    size: integer('size').notNull(),
+    mtimeMs: integer('mtime_ms').notNull(),
+    // sha256 of the file; finds files that were moved or renamed.
+    hash: text('hash').notNull(),
+    format: text('format').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index('book_files_book_id_idx').on(table.bookId),
+    index('book_files_hash_idx').on(table.hash),
+  ],
 )
