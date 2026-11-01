@@ -18,11 +18,5 @@
   "intent": true,
   "version": 1,
   "framework": "react",
-  "chosenAddOns": [
-    "eslint",
-    "nitro",
-    "drizzle",
-    "shadcn",
-    "better-auth"
-  ]
+  "chosenAddOns": ["eslint", "nitro", "drizzle", "shadcn", "better-auth"]
 }

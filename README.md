@@ -32,7 +32,6 @@ If you prefer not to use Tailwind CSS:
 
 ## Linting & Formatting
 
-
 This project uses [oxlint](https://oxc.rs/docs/guide/usage/linter.html) for linting (configured in `.oxlintrc.json`), [prettier](https://prettier.io/) for formatting, and [tsrs](https://github.com/oxc-project/tsrs) for type checking. The following scripts are available:
 
 ```bash
@@ -43,7 +42,6 @@ pnpm typecheck
 ```
 
 The committed `.vscode/settings.json` points VS Code's TypeScript 7 extension (`TypeScriptTeam.native-preview`) at the project's tsrs language server.
-
 
 ## Deploy with Nitro
 
@@ -58,7 +56,6 @@ The build output is a self-contained Node server. To deploy, push the `dist/` di
 
 For host-specific presets (Vercel, Netlify, Cloudflare, AWS Lambda, etc.) and tuning, see https://v3.nitro.build/deploy.
 
-
 ## Shadcn
 
 Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
@@ -66,7 +63,6 @@ Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
 ```bash
 pnpm dlx shadcn@latest add button
 ```
-
 
 ## Setting up Better Auth
 
@@ -84,15 +80,15 @@ Better Auth can work in stateless mode, but to persist user data, add a database
 
 ```typescript
 // src/lib/auth.ts
-import { betterAuth } from "better-auth";
-import { Pool } from "pg";
+import { betterAuth } from 'better-auth'
+import { Pool } from 'pg'
 
 export const auth = betterAuth({
   database: new Pool({
     connectionString: process.env.DATABASE_URL,
   }),
   // ... rest of config
-});
+})
 ```
 
 Then run migrations:
@@ -100,8 +96,6 @@ Then run migrations:
 ```bash
 pnpm dlx @better-auth/cli migrate
 ```
-
-
 
 ## Routing
 
@@ -120,7 +114,7 @@ Now that you have two routes you can use a `Link` component to navigate between 
 To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
 
 ```tsx
-import { Link } from "@tanstack/react-router";
+import { Link } from '@tanstack/react-router'
 ```
 
 Then anywhere in your JSX you can use it like so:
@@ -188,11 +182,11 @@ const getServerTime = createServerFn({
 // Use in a component
 function MyComponent() {
   const [time, setTime] = useState('')
-  
+
   useEffect(() => {
     getServerTime().then(setTime)
   }, [])
-  
+
   return <div>Server time: {time}</div>
 }
 ```
@@ -244,8 +238,6 @@ function PeopleComponent() {
 ```
 
 Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-
 
 # Learn More
 
