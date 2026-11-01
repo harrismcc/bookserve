@@ -1,0 +1,19 @@
+src/routes/_app.tsx
+  s_6625dc4621e2df::t_add749e8f00b26 6,31-32,34,41,63-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "08181b585bc7a79dc63a86b5e0e003d75046efb7",
+  "prompts": {},
+  "sessions": {
+    "s_6625dc4621e2df": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qHyMNaJ5KbdoAwrZm3s",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    }
+  }
+}
