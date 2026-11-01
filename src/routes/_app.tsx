@@ -3,6 +3,7 @@ import {
   Outlet,
   createFileRoute,
   redirect,
+  useLocation,
   useRouter,
 } from '@tanstack/react-router'
 import { ChevronDown, LogOut } from 'lucide-react'
@@ -27,15 +28,17 @@ export const Route = createFileRoute('/_app')({
 })
 
 // Top-bar navigation. `admin: true` hides the item from non-admins;
-// the route itself must still guard access.
+// the route itself must still guard access. `also` marks the item active under
+// other path prefixes too (book pages belong to the Library).
 const navItems = [
-  { to: '/', label: 'Library', exact: true },
+  { to: '/', label: 'Library', exact: true, also: '/books/' },
   { to: '/settings', label: 'Settings', admin: true },
 ] as const
 
 function AppShell() {
   const { user } = Route.useRouteContext()
   const router = useRouter()
+  const pathname = useLocation({ select: (location) => location.pathname })
 
   async function signOut() {
     await authClient.signOut()
@@ -57,7 +60,12 @@ function AppShell() {
                   key={item.to}
                   to={item.to}
                   activeOptions={{ exact: 'exact' in item }}
-                  className="text-muted-foreground transition-colors hover:text-foreground data-[status=active]:font-medium data-[status=active]:text-foreground"
+                  data-also-active={
+                    'also' in item && pathname.startsWith(item.also)
+                      ? true
+                      : undefined
+                  }
+                  className="text-muted-foreground transition-colors hover:text-foreground data-[also-active]:font-medium data-[also-active]:text-foreground data-[status=active]:font-medium data-[status=active]:text-foreground"
                 >
                   {item.label}
                 </Link>
