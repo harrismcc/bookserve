@@ -1,0 +1,29 @@
+prettier.config.js
+  s_226d1cdc1de13e::t_4c018476892dc9 7-8,10
+.cta.json
+  s_226d1cdc1de13e::t_4c018476892dc9 21-22
+components.json
+  s_226d1cdc1de13e::t_4c018476892dc9 21
+README.md
+  s_226d1cdc1de13e::t_4c018476892dc9 83-84,91,117,185,189
+src/styles.css
+  s_226d1cdc1de13e::t_4c018476892dc9 174-184,198-207,280-284,299-302
+tsconfig.json
+  s_226d1cdc1de13e::t_4c018476892dc9 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2851328966a80f48e35f0d0b43d74c0ec373ab08",
+  "prompts": {},
+  "sessions": {
+    "s_226d1cdc1de13e": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qFCdZdKkbRlHHCbXKQi",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    }
+  }
+}
