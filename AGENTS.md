@@ -53,7 +53,14 @@ Use `pnpm db:generate` to create committed migrations for schema changes; don't 
 - Make the best decision that will elevate all three: the user experience (UX), developer experience (DX), and agent experience (AX) always, without breaking anything.
 - Commit as you go, in logical commits. Never ask whether to commit.
 - Cut taglines, helper text and secondary labels. If a screen needs them to make sense, fix the layout.
-- Before adding complexity for a speculative or vanishingly unlikely race or security edge case, explain the concrete failure mode, likelihood, and complexity cost to the user and get their buy-in. Do not silently expand scope for theoretical robustness.
+
+## Decisions: one-way and two-way doors
+
+Be self-driving. Sort each decision by how costly it is to undo.
+
+- **Two-way doors** are cheap to reverse: decide and keep going. This covers most implementation choices, naming, local structure, small scope adjustments, and obvious race-condition or security fixes. Mention notable ones in your summary.
+- **One-way doors** are costly to reverse: stop and loop in the human before acting. Examples: changing the architecture, shipping a schema or storage-format change to users' installs, adding a dependency or service, touching users' library files, or discovering something that breaks an assumption the task was built on. Explain what you found, the options, and your recommendation.
+- Do not add complexity for a speculative or vanishingly unlikely race or security edge case. If you think one is worth it, treat it as a one-way door: explain the concrete failure mode, likelihood, and complexity cost first.
 
 ## Scope Guard
 
@@ -93,7 +100,7 @@ Complete the current task with the minimum sufficient change.
 
 Stop when the work starts adding future-use layers, workaround stacks,
 unrelated cleanup, or tests for unstated behavior. Rewrite a smaller plan
-and confirm the new scope.
+and continue. Loop in the human only if the new scope is a one-way door.
 
 ### Done means
 
