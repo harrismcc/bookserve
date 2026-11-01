@@ -1,0 +1,47 @@
+docs/plan.md
+  s_aaba161b70843f::t_2008eaa5e4a3bd 22
+  s_86bcb94fd04ee6::t_5b56d844905d81 55-77
+  s_90e28182a05b24::t_7afb88721ff326 23,32,37,44,49,78
+.prettierignore
+  s_6a25be7e847456::t_0ed7a5c7abc09c 3-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5cf907f10e5bcf68e750b32ddbe6b901b84d04b1",
+  "prompts": {},
+  "sessions": {
+    "s_6a25be7e847456": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGQc2NTl9SSLTq1by0T",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_86bcb94fd04ee6": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGQlAvmXzSzpyH7t3Kw",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_90e28182a05b24": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGRPkPJIUuG1xMNGrhG",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_aaba161b70843f": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGQlAFdD3YcNu50erbc",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    }
+  }
+}
