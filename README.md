@@ -20,6 +20,7 @@ Open http://localhost:3000 and create the admin account. On first boot the conta
 | `BOOKSERVE_LIBRARY_DIR` | `/books`        | Your books                                                                                                   |
 | `BOOKSERVE_URL`         | unset           | Public URL, e.g. `https://books.example.com`. Unset: taken from each request (works behind a reverse proxy). |
 | `BETTER_AUTH_SECRET`    | unset           | Overrides the secret generated in the data dir                                                               |
+| `GOOGLE_BOOKS_API_KEY`  | unset           | Enables Google Books matching (keyless requests are rejected by Google)                                      |
 | `PORT`                  | `3000`          | HTTP port                                                                                                    |
 
 ## Development
