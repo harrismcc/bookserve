@@ -1,0 +1,19 @@
+docs/plan.md
+  s_e4ce96e5c320bb::t_17e244f4cea30c 1-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "998abc9c711a73cd6c519ed75f26a87a803c6d26",
+  "prompts": {},
+  "sessions": {
+    "s_e4ce96e5c320bb": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qG8VdHNYECbdh4b2BIa",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    }
+  }
+}
