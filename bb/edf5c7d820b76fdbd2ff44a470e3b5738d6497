@@ -1,0 +1,112 @@
+src/routes/_app/settings/index.tsx
+  s_1a0f009aee3807::t_9b13eedd499c8c 1-7
+src/components/ui/select.tsx
+  s_4b409bcdb01b7e::t_462a5a80fbb1cb 1,3-6,28,32,40,55-56,64-67,76-78,96,112,136,150-151,168-169
+  s_1fa245af321e94::t_40186eeab7299d 2,7-27,29-31,33-39,41-54,57-63,68-75,79-95,97-111,113-135,137-149,152-167,170-189
+src/routes/_app/settings/route.tsx
+  s_ccb578fdcb27f9::t_6e70a33c583d63 25
+  s_f9d114e2a83e7d::t_b8a26a3b05b01a 1
+  s_1a0f009aee3807::t_9b13eedd499c8c 2-24,26-37
+src/routes/_app/index.tsx
+  s_2acc5087ccb700::t_2ce804568dc88e 1-2,8,10-13
+src/components/ui/dialog.tsx
+  s_1fa245af321e94::t_40186eeab7299d 5,7-39,42-61,64-81,83-85,87-96,98-103,106-125,127-138,140-156
+  s_4b409bcdb01b7e::t_462a5a80fbb1cb 1-4,6,40-41,62-63,82,86,97,104-105,126,139
+src/components/ui/table.tsx
+  s_1fa245af321e94::t_40186eeab7299d 2,5,7-13,15-20,22-24,26-30,32-34,36-40,42-45,48-53,55-58,61-66,68-71,74-79,81-84,87-95,97-99,101-115
+  s_4b409bcdb01b7e::t_462a5a80fbb1cb 1,3-4,6,14,21,25,31,35,41,46-47,54,59-60,67,72-73,80,85-86,96,100
+src/routes/_app/settings/users.tsx
+  s_ab6a892275020f::t_c076d955c1e0ba 1-118,122-170,175-363
+  s_f9d114e2a83e7d::t_b8a26a3b05b01a 119-121,171-174
+src/routes/_app.tsx
+  s_ccb578fdcb27f9::t_6e70a33c583d63 60
+  s_6396454a691dbd::t_542d2a686c63ba 1-8,10-20,26,28-59,61-85
+src/routeTree.gen.ts
+  s_f9d114e2a83e7d::t_b8a26a3b05b01a 16-18,40-54,65-66,68,74,76,83,85,87,91-98,100-111,151-171,182-194,196,201
+src/components/ui/dropdown-menu.tsx
+  s_4b409bcdb01b7e::t_462a5a80fbb1cb 1-4,42-43,62,66,75,93,129,155-156,170,179,184-185,212,230-231
+  s_1fa245af321e94::t_40186eeab7299d 5-41,44-61,63-65,67-74,76-92,94-128,130-154,157-169,171-178,180-183,186-211,213-229,232-254
+src/components/ui/alert-dialog.tsx
+  s_56f5303db422fd::t_a58343441c6d2f 4,6-36,39-46,48-49,51-58,61-70,72-75,78-86,88-91,94-107,110-122,124-131,133-137,139-146,149-150,152-164,167-168,170-194
+  s_4b409bcdb01b7e::t_462a5a80fbb1cb 1-3,5,37-38,47,50,59-60,71,76-77,87,92-93,108-109,123,132,138,147-148,151,165-166,169
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bbedf5c7d820b76fdbd2ff44a470e3b5738d6497",
+  "prompts": {},
+  "sessions": {
+    "s_1a0f009aee3807": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGY9IOSLa1reg2Laz0E",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_1fa245af321e94": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGVMdE8sQmbO7ovmsBN",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_2acc5087ccb700": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGX2m73Ztun4jAIwMdQ",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_4b409bcdb01b7e": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGVoWWZNBzyGls5CKCs",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_56f5303db422fd": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGVW388CuRsjnyOxu4j",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_6396454a691dbd": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGWzmDWAubgFVFnon87",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_ab6a892275020f": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGZ62FejHMyS0l6ZkMF",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_ccb578fdcb27f9": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGe0TQ62OsDIg1BRpzm",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    },
+    "s_f9d114e2a83e7d": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qGZGdScMcoUstkZCGCQ",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    }
+  }
+}
