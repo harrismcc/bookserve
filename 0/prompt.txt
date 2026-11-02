@@ -1,0 +1,1 @@
+I want to be able to natively browse and download books from OPDS servers in this app, so we'll need a new page. We can call it "market". This will be where we can browse and add books to our library. IN settings we'll need a place for admins to add OPDS servers. I think gutenberg has one so that should be the default

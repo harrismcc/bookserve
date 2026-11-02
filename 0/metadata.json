@@ -1,0 +1,44 @@
+{
+  "cli_version": "0.12.2",
+  "checkpoint_id": "01M6CYM56DB2GC744DRPPP700Y",
+  "session_id": "T-01a199de-e00a-701f-af25-d4e95b163303",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-02T01:40:20.914011101Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/hooks/use-action.ts",
+    "src/lib/metadata/http.ts",
+    "src/lib/opds-functions.ts",
+    "src/lib/opds.ts",
+    "src/routes/_app.tsx",
+    "src/routes/_app/market.tsx",
+    "src/routes/_app/settings/opds.tsx",
+    "src/routes/_app/settings/route.tsx"
+  ],
+  "agent": "Amp",
+  "model": "",
+  "turn_id": "15d0b83d3335",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 131166,
+    "cache_read_tokens": 4974685,
+    "output_tokens": 33821,
+    "api_call_count": 40
+  },
+  "redaction": {
+    "replacements": 13,
+    "layers": {
+      "betterleaks": 0,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 0,
+      "credentialed_uri": 0,
+      "entropy": 91,
+      "key_context": 0,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  }
+}
