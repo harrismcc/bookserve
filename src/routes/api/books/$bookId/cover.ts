@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm'
 
 import { db } from '#/db'
 import { books } from '#/db/schema'
-import { auth } from '#/lib/auth'
+import { requestUser, unauthorized } from '#/lib/auth'
 import { bookView, fileResponse, resolveInside } from '#/lib/books'
 import { config } from '#/lib/config'
 
@@ -19,9 +19,7 @@ export const Route = createFileRoute('/api/books/$bookId/cover')({
   server: {
     handlers: {
       GET: async ({ request, params }) => {
-        if (!(await auth.api.getSession({ headers: request.headers }))) {
-          return new Response('Unauthorized', { status: 401 })
-        }
+        if (!(await requestUser(request))) return unauthorized()
         const row = db
           .select()
           .from(books)

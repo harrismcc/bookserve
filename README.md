@@ -23,6 +23,10 @@ Open http://localhost:3000 and create the admin account. On first boot the conta
 | `GOOGLE_BOOKS_API_KEY`  | unset           | Enables Google Books matching (keyless requests are rejected by Google)                                      |
 | `PORT`                  | `3000`          | HTTP port                                                                                                    |
 
+## Reading apps (OPDS)
+
+The library is an OPDS 1.2 catalog at `http://<server>:3000/opds`. Add that URL to any OPDS reader (KOReader, Thorium, Moon+ Reader, Calibre…) and sign in with a Bookserve username and password. It lists recently added books and all books by title, supports search, and downloads EPUBs.
+
 ## Development
 
 ```bash

@@ -15,6 +15,9 @@ import { Route as SetupRouteImport } from './routes/setup'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppMarketRouteImport } from './routes/_app/market'
 import { Route as AppSettingsRouteRouteImport } from './routes/_app/settings/route'
+import { Route as OpdsIndexRouteImport } from './routes/opds/index'
+import { Route as OpdsBooksRouteImport } from './routes/opds/books'
+import { Route as OpdsSearchRouteImport } from './routes/opds/search'
 import { Route as AppBooksBookIdRouteImport } from './routes/_app/books/$bookId'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppSettingsMarketRouteImport } from './routes/_app/settings/market'
@@ -52,6 +55,21 @@ const AppSettingsRouteRoute = AppSettingsRouteRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => AppRoute,
+} as any)
+const OpdsIndexRoute = OpdsIndexRouteImport.update({
+  id: '/opds/',
+  path: '/opds/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OpdsBooksRoute = OpdsBooksRouteImport.update({
+  id: '/opds/books',
+  path: '/opds/books',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OpdsSearchRoute = OpdsSearchRouteImport.update({
+  id: '/opds/search',
+  path: '/opds/search',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppBooksBookIdRoute = AppBooksBookIdRouteImport.update({
   id: '/books/$bookId',
@@ -100,6 +118,9 @@ export interface FileRoutesByFullPath {
   '/setup': typeof SetupRoute
   '/settings': typeof AppSettingsRouteRouteWithChildren
   '/market': typeof AppMarketRoute
+  '/opds/books': typeof OpdsBooksRoute
+  '/opds/search': typeof OpdsSearchRoute
+  '/opds/': typeof OpdsIndexRoute
   '/books/$bookId': typeof AppBooksBookIdRoute
   '/settings/market': typeof AppSettingsMarketRoute
   '/settings/users': typeof AppSettingsUsersRoute
@@ -113,7 +134,10 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/setup': typeof SetupRoute
   '/market': typeof AppMarketRoute
+  '/opds/books': typeof OpdsBooksRoute
+  '/opds/search': typeof OpdsSearchRoute
   '/': typeof AppIndexRoute
+  '/opds': typeof OpdsIndexRoute
   '/books/$bookId': typeof AppBooksBookIdRoute
   '/settings/market': typeof AppSettingsMarketRoute
   '/settings/users': typeof AppSettingsUsersRoute
@@ -130,7 +154,10 @@ export interface FileRoutesById {
   '/setup': typeof SetupRoute
   '/_app/settings': typeof AppSettingsRouteRouteWithChildren
   '/_app/market': typeof AppMarketRoute
+  '/opds/books': typeof OpdsBooksRoute
+  '/opds/search': typeof OpdsSearchRoute
   '/_app/': typeof AppIndexRoute
+  '/opds/': typeof OpdsIndexRoute
   '/_app/books/$bookId': typeof AppBooksBookIdRoute
   '/_app/settings/market': typeof AppSettingsMarketRoute
   '/_app/settings/users': typeof AppSettingsUsersRoute
@@ -148,6 +175,9 @@ export interface FileRouteTypes {
     | '/setup'
     | '/settings'
     | '/market'
+    | '/opds/books'
+    | '/opds/search'
+    | '/opds/'
     | '/books/$bookId'
     | '/settings/market'
     | '/settings/users'
@@ -161,7 +191,10 @@ export interface FileRouteTypes {
     | '/login'
     | '/setup'
     | '/market'
+    | '/opds/books'
+    | '/opds/search'
     | '/'
+    | '/opds'
     | '/books/$bookId'
     | '/settings/market'
     | '/settings/users'
@@ -177,7 +210,10 @@ export interface FileRouteTypes {
     | '/setup'
     | '/_app/settings'
     | '/_app/market'
+    | '/opds/books'
+    | '/opds/search'
     | '/_app/'
+    | '/opds/'
     | '/_app/books/$bookId'
     | '/_app/settings/market'
     | '/_app/settings/users'
@@ -192,6 +228,9 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   SetupRoute: typeof SetupRoute
+  OpdsBooksRoute: typeof OpdsBooksRoute
+  OpdsSearchRoute: typeof OpdsSearchRoute
+  OpdsIndexRoute: typeof OpdsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiBooksUploadRoute: typeof ApiBooksUploadRoute
   ApiBooksBookIdCoverRoute: typeof ApiBooksBookIdCoverRoute
@@ -241,6 +280,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings'
       preLoaderRoute: typeof AppSettingsRouteRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/opds/': {
+      id: '/opds/'
+      path: '/opds'
+      fullPath: '/opds/'
+      preLoaderRoute: typeof OpdsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/opds/books': {
+      id: '/opds/books'
+      path: '/opds/books'
+      fullPath: '/opds/books'
+      preLoaderRoute: typeof OpdsBooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/opds/search': {
+      id: '/opds/search'
+      path: '/opds/search'
+      fullPath: '/opds/search'
+      preLoaderRoute: typeof OpdsSearchRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_app/books/$bookId': {
       id: '/_app/books/$bookId'
@@ -336,6 +396,9 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   SetupRoute: SetupRoute,
+  OpdsBooksRoute: OpdsBooksRoute,
+  OpdsSearchRoute: OpdsSearchRoute,
+  OpdsIndexRoute: OpdsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiBooksUploadRoute: ApiBooksUploadRoute,
   ApiBooksBookIdCoverRoute: ApiBooksBookIdCoverRoute,
