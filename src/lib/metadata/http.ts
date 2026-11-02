@@ -12,10 +12,14 @@ export class HttpError extends Error {
   }
 }
 
-async function request(url: string, timeoutMs: number) {
+export async function request(
+  url: string,
+  timeoutMs: number,
+  headers?: Record<string, string>,
+) {
   try {
     return await fetch(url, {
-      headers: { 'user-agent': USER_AGENT },
+      headers: { ...headers, 'user-agent': USER_AGENT },
       signal: AbortSignal.timeout(timeoutMs),
     })
   } catch (err) {
