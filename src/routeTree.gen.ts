@@ -13,9 +13,11 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppMarketRouteImport } from './routes/_app/market'
 import { Route as AppSettingsRouteRouteImport } from './routes/_app/settings/route'
 import { Route as AppBooksBookIdRouteImport } from './routes/_app/books/$bookId'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
+import { Route as AppSettingsMarketRouteImport } from './routes/_app/settings/market'
 import { Route as AppSettingsUsersRouteImport } from './routes/_app/settings/users'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiBooksUploadRouteImport } from './routes/api/books/upload'
@@ -41,6 +43,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMarketRoute = AppMarketRouteImport.update({
+  id: '/market',
+  path: '/market',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsRouteRoute = AppSettingsRouteRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -54,6 +61,11 @@ const AppBooksBookIdRoute = AppBooksBookIdRouteImport.update({
 const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppSettingsRouteRoute,
+} as any)
+const AppSettingsMarketRoute = AppSettingsMarketRouteImport.update({
+  id: '/market',
+  path: '/market',
   getParentRoute: () => AppSettingsRouteRoute,
 } as any)
 const AppSettingsUsersRoute = AppSettingsUsersRouteImport.update({
@@ -87,7 +99,9 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/setup': typeof SetupRoute
   '/settings': typeof AppSettingsRouteRouteWithChildren
+  '/market': typeof AppMarketRoute
   '/books/$bookId': typeof AppBooksBookIdRoute
+  '/settings/market': typeof AppSettingsMarketRoute
   '/settings/users': typeof AppSettingsUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/books/upload': typeof ApiBooksUploadRoute
@@ -98,8 +112,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/setup': typeof SetupRoute
+  '/market': typeof AppMarketRoute
   '/': typeof AppIndexRoute
   '/books/$bookId': typeof AppBooksBookIdRoute
+  '/settings/market': typeof AppSettingsMarketRoute
   '/settings/users': typeof AppSettingsUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/books/upload': typeof ApiBooksUploadRoute
@@ -113,8 +129,10 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/setup': typeof SetupRoute
   '/_app/settings': typeof AppSettingsRouteRouteWithChildren
+  '/_app/market': typeof AppMarketRoute
   '/_app/': typeof AppIndexRoute
   '/_app/books/$bookId': typeof AppBooksBookIdRoute
+  '/_app/settings/market': typeof AppSettingsMarketRoute
   '/_app/settings/users': typeof AppSettingsUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/books/upload': typeof ApiBooksUploadRoute
@@ -129,7 +147,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/setup'
     | '/settings'
+    | '/market'
     | '/books/$bookId'
+    | '/settings/market'
     | '/settings/users'
     | '/api/auth/$'
     | '/api/books/upload'
@@ -140,8 +160,10 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/setup'
+    | '/market'
     | '/'
     | '/books/$bookId'
+    | '/settings/market'
     | '/settings/users'
     | '/api/auth/$'
     | '/api/books/upload'
@@ -154,8 +176,10 @@ export interface FileRouteTypes {
     | '/login'
     | '/setup'
     | '/_app/settings'
+    | '/_app/market'
     | '/_app/'
     | '/_app/books/$bookId'
+    | '/_app/settings/market'
     | '/_app/settings/users'
     | '/api/auth/$'
     | '/api/books/upload'
@@ -204,6 +228,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/market': {
+      id: '/_app/market'
+      path: '/market'
+      fullPath: '/market'
+      preLoaderRoute: typeof AppMarketRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings': {
       id: '/_app/settings'
       path: '/settings'
@@ -223,6 +254,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/settings/'
       preLoaderRoute: typeof AppSettingsIndexRouteImport
+      parentRoute: typeof AppSettingsRouteRoute
+    }
+    '/_app/settings/market': {
+      id: '/_app/settings/market'
+      path: '/market'
+      fullPath: '/settings/market'
+      preLoaderRoute: typeof AppSettingsMarketRouteImport
       parentRoute: typeof AppSettingsRouteRoute
     }
     '/_app/settings/users': {
@@ -264,11 +302,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppSettingsRouteRouteChildren {
+  AppSettingsMarketRoute: typeof AppSettingsMarketRoute
   AppSettingsUsersRoute: typeof AppSettingsUsersRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
 }
 
 const AppSettingsRouteRouteChildren: AppSettingsRouteRouteChildren = {
+  AppSettingsMarketRoute: AppSettingsMarketRoute,
   AppSettingsUsersRoute: AppSettingsUsersRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,
 }
@@ -278,12 +318,14 @@ const AppSettingsRouteRouteWithChildren =
 
 interface AppRouteChildren {
   AppSettingsRouteRoute: typeof AppSettingsRouteRouteWithChildren
+  AppMarketRoute: typeof AppMarketRoute
   AppIndexRoute: typeof AppIndexRoute
   AppBooksBookIdRoute: typeof AppBooksBookIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppSettingsRouteRoute: AppSettingsRouteRouteWithChildren,
+  AppMarketRoute: AppMarketRoute,
   AppIndexRoute: AppIndexRoute,
   AppBooksBookIdRoute: AppBooksBookIdRoute,
 }

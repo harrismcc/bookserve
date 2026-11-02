@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 import { cn } from '#/lib/utils'
 
 type Props = {
@@ -14,18 +16,21 @@ function hue(text: string) {
   return h
 }
 
-// The cover image, or a tinted block with the title for books without one.
+// The cover image, or a tinted block with the title for books without one
+// (or whose image fails to load).
 export function BookCover({ title, authors, coverUrl, className }: Props) {
+  const [failed, setFailed] = useState<string | null>(null)
   const base = cn(
     'aspect-[2/3] w-full overflow-hidden rounded-md shadow-sm ring-1 ring-black/5',
     className,
   )
-  if (coverUrl) {
+  if (coverUrl && failed !== coverUrl) {
     return (
       <img
         src={coverUrl}
         alt={title}
         loading="lazy"
+        onError={() => setFailed(coverUrl)}
         className={cn(base, 'bg-muted object-cover')}
       />
     )

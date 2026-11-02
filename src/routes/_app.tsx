@@ -32,6 +32,7 @@ export const Route = createFileRoute('/_app')({
 // other path prefixes too (book pages belong to the Library).
 const navItems = [
   { to: '/', label: 'Library', exact: true, also: '/books/' },
+  { to: '/market', label: 'Market', admin: true },
   { to: '/settings', label: 'Settings', admin: true },
 ] as const
 

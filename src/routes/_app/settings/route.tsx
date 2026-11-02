@@ -10,7 +10,10 @@ export const Route = createFileRoute('/_app/settings')({
 })
 
 // Settings sections, shown as the side nav.
-const sections = [{ to: '/settings/users', label: 'Users' }] as const
+const sections = [
+  { to: '/settings/users', label: 'Users' },
+  { to: '/settings/market', label: 'Market sources' },
+] as const
 
 function Settings() {
   return (
