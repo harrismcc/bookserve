@@ -1,0 +1,1 @@
+Can we setup some basic seed data for local dev so that things are easy to test? Maybe some accounts and some books in the library
