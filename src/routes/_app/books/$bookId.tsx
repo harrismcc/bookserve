@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { createFileRoute, notFound, useRouter } from '@tanstack/react-router'
-import { Download, RotateCcw, SearchCheck } from 'lucide-react'
+import { Download, RotateCcw, SearchCheck, Trash2 } from 'lucide-react'
 
 import { BookCover } from '#/components/book-cover'
 import { MatchDialog } from '#/components/match-dialog'
@@ -9,13 +9,14 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
+  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '#/components/ui/alert-dialog'
 import { Button } from '#/components/ui/button'
-import { getBook } from '#/lib/book-functions'
+import { getBook, removeBook } from '#/lib/book-functions'
 import { revertMatch } from '#/lib/match-functions'
 import { languageName } from '#/lib/utils'
 
@@ -101,20 +102,31 @@ function AdminActions({
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
 
-  async function revert(event: React.MouseEvent) {
-    // Keep the dialog open until the request finishes so errors show inline.
-    event.preventDefault()
-    setPending(true)
-    setError('')
-    try {
-      await revertMatch({ data: book.id })
-      await router.invalidate()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Request failed')
-    } finally {
-      setPending(false)
+  // Click handler for a confirm button. Keeps the dialog open until the request
+  // finishes so errors show inline.
+  const confirm = (action: () => Promise<unknown>) =>
+    async function (event: React.MouseEvent) {
+      event.preventDefault()
+      setPending(true)
+      setError('')
+      try {
+        await action()
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Request failed')
+      } finally {
+        setPending(false)
+      }
     }
-  }
+
+  const revert = confirm(async () => {
+    await revertMatch({ data: book.id })
+    await router.invalidate()
+  })
+
+  const remove = confirm(async () => {
+    await removeBook({ data: book.id })
+    await router.navigate({ to: '/' })
+  })
 
   return (
     <>
@@ -145,6 +157,35 @@ function AdminActions({
           </AlertDialogContent>
         </AlertDialog>
       )}
+      <AlertDialog onOpenChange={() => setError('')}>
+        <AlertDialogTrigger asChild>
+          <Button variant="ghost" className="text-destructive">
+            <Trash2 />
+            Delete
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {book.title}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {book.missing
+                ? 'The book will be removed from the library.'
+                : 'The book file will be permanently deleted from disk.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={remove}
+              disabled={pending}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

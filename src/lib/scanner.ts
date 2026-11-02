@@ -9,7 +9,7 @@ import { eq } from 'drizzle-orm'
 
 import { db } from '#/db'
 import { bookFiles, books } from '#/db/schema'
-import { sortKey } from '#/lib/books'
+import { resolveInside, sortKey } from '#/lib/books'
 import { config } from '#/lib/config'
 import { readEpub } from '#/lib/epub'
 import type { EpubCover } from '#/lib/epub'
@@ -249,11 +249,40 @@ async function writeCover(bookId: string, cover: EpubCover | null) {
   return `covers/${bookId}.${cover.ext}`
 }
 
+// Deletes a book's files from the library, its row (book_files cascade) and its
+// scanned and matched covers. Runs in the scan queue so a scan can't re-add it.
+export function deleteBook(bookId: string) {
+  return serialize(async () => {
+    const files = db
+      .select({ path: bookFiles.path })
+      .from(bookFiles)
+      .where(eq(bookFiles.bookId, bookId))
+      .all()
+    // Files go first: if one can't be removed, the book stays in the library.
+    for (const file of files) {
+      const abs = resolveInside(config.libraryDir, file.path)
+      if (abs) await fsp.rm(abs, { force: true })
+    }
+    const deleted = db.delete(books).where(eq(books.id, bookId)).run()
+    if (!deleted.changes) throw new Error('Book not found')
+    const dir = path.join(config.dataDir, 'covers')
+    for (const name of await fsp.readdir(dir).catch(() => [])) {
+      if (
+        name.startsWith(`${bookId}.`) ||
+        name.startsWith(`${bookId}-matched.`)
+      ) {
+        await fsp.rm(path.join(dir, name), { force: true })
+      }
+    }
+    console.log(`[scan] Deleted ${files.map((f) => f.path).join(', ')}`)
+  })
+}
+
 export class UploadError extends Error {}
 
 // Streams an uploaded EPUB to a temp file in the data dir, reads its metadata,
 // then places it at <library>/<Author>/<Title>/<name> (never overwriting) and
-// imports it. This is the only place the app writes into the library.
+// imports it. This and deleteBook are the only places the app changes the library.
 export async function uploadBook(
   fileName: string,
   body: WebReadableStream<Uint8Array>,

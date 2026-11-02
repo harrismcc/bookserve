@@ -6,7 +6,7 @@ import { db } from '#/db'
 import { books } from '#/db/schema'
 import { auth } from '#/lib/auth'
 import { bookView } from '#/lib/books'
-import { scanLibrary } from '#/lib/scanner'
+import { deleteBook, scanLibrary } from '#/lib/scanner'
 import { requireAdmin } from '#/lib/user-functions'
 
 async function requireSession() {
@@ -62,3 +62,11 @@ export const scanLibraryNow = createServerFn({ method: 'POST' }).handler(
     return scanLibrary()
   },
 )
+
+// Removes the book and deletes its file from the library.
+export const removeBook = createServerFn({ method: 'POST' })
+  .validator((bookId: string) => bookId)
+  .handler(async ({ data: bookId }) => {
+    await requireAdmin()
+    await deleteBook(bookId)
+  })
