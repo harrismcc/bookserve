@@ -1,0 +1,21 @@
+package.json
+  s_6913e132b8287c::t_e5549c893ffc13 38
+pnpm-lock.yaml
+  s_6913e132b8287c::t_67b191f74b82d7 54-55,2524-2525,2609-2611,2614-2615,2619-2620,2845-2847,2858-2859,2992-2995,5254,5256,5308,5310-5311,5447,5449-5450,5452-5453,5610,5612-5617,5625,5859-5860
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8a87a4215f061db1dc1584e861a557751d353dc4",
+  "prompts": {},
+  "sessions": {
+    "s_6913e132b8287c": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034qJ6yZGvaQKyszGbXM5Y",
+        "model": "unknown"
+      },
+      "human_author": "harrismcc <git@harrismccullers.com>"
+    }
+  }
+}
