@@ -35,7 +35,7 @@
     "fast-xml-parser": "^5.11.2",
     "fflate": "^0.8.3",
     "lucide-react": "^0.577.0",
-    "nitro": "3.0.260610-beta",
+    "nitro": "3.0.261029-rc",
     "radix-ui": "^1.8.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
