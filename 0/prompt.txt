@@ -1,0 +1,1 @@
+Can we create an ODPS compatable API for serving out the books in our library? That way external consumers can access the library without having to build out specific integrations with bookserve
