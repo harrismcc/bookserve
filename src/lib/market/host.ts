@@ -103,6 +103,7 @@ function summary(book: BookSummary): BookSummary {
     title: str(book.title) || 'Untitled',
     authors: strs(book.authors),
     coverUrl: httpUrl(book.coverUrl),
+    isbn: str(book.isbn, 20).replace(/[^\dX]/gi, '') || null,
   }
 }
 
@@ -145,7 +146,6 @@ export function cleanDetails(book: BookDetails): BookDetails {
     language: str(book.language, 20) || null,
     publisher: str(book.publisher) || null,
     publishedDate: /^\d{4}(-\d{2}(-\d{2})?)?$/.test(date) ? date : null,
-    isbn: str(book.isbn, 20).replace(/[^\dX]/gi, '') || null,
     subjects: strs(book.subjects),
     shelves: shelves(book.shelves),
     formats: (Array.isArray(book.formats) ? book.formats : [])

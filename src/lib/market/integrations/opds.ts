@@ -45,6 +45,7 @@ async function listing(ctx: IntegrationContext, url: string): Promise<Listing> {
       title: e.title,
       authors: e.authors,
       coverUrl: e.coverUrl,
+      isbn: e.isbn,
     })),
     nextCursor: f.next,
   }
@@ -124,7 +125,7 @@ export const opds = defineIntegration({
       language: e.language,
       publisher: e.publisher,
       publishedDate: e.issued?.match(/^\d{4}(-\d{2}(-\d{2})?)?/)?.[0] ?? null,
-      isbn: null,
+      isbn: e.isbn,
       subjects: e.subjects,
       shelves: e.related.map((r) => ({
         id: r.href,

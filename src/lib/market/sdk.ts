@@ -11,6 +11,9 @@ export type BookSummary = {
   title: string
   authors: string[]
   coverUrl: string | null
+  // When known in lists; the Market uses it to merge copies from different
+  // sources (it also merges by title and author).
+  isbn?: string | null
 }
 
 export type Format = {
@@ -30,7 +33,6 @@ export type BookDetails = BookSummary & {
   publisher: string | null
   // `YYYY`, `YYYY-MM` or `YYYY-MM-DD`.
   publishedDate: string | null
-  isbn: string | null
   subjects: string[]
   // Related shelves: more by the author, the same series or category...
   shelves: ShelfLink[]

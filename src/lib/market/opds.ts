@@ -23,6 +23,7 @@ export type OpdsEntry = {
   subjects: string[]
   publisher: string | null
   issued: string | null
+  isbn: string | null
 }
 
 export type OpdsFeed = {
@@ -42,7 +43,15 @@ const parser = new XMLParser({
   // Content may be (escaped) HTML or XHTML; keep it raw for htmlToText.
   stopNodes: ['*.content', '*.summary'],
   isArray: (name) =>
-    ['entry', 'link', 'author', 'Url', 'category', 'language'].includes(name),
+    [
+      'entry',
+      'link',
+      'author',
+      'Url',
+      'category',
+      'language',
+      'identifier',
+    ].includes(name),
 })
 
 type Node = string | ({ '#text'?: string } & Record<string, unknown>)
@@ -137,6 +146,10 @@ function parseEntry(entry: Record<string, unknown>, base: string): OpdsEntry {
       .filter(Boolean),
     publisher: text(entry.publisher as Node) || null,
     issued: text((entry.issued ?? entry.published) as Node) || null,
+    isbn:
+      ((entry.identifier ?? []) as Node[])
+        .map((i) => text(i).match(/^urn:isbn:([\dX-]+)$/i)?.[1])
+        .find(Boolean) ?? null,
   }
 }
 
