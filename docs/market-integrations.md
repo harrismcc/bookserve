@@ -78,6 +78,8 @@ export const example = defineIntegration({
 
 Then register it in `INTEGRATIONS` in `src/lib/market/host.ts`. It shows up in the "Add source" dialog, with a form built from `settings`.
 
+The Market shows every source at once, merging the same book from different sources into one entry, and home rows or shelves with the same title into one. Books merge on ISBN, or on title (up to any `:`, `;`, `(` or ` - `) plus the first author's surname. Set `isbn` on a `BookSummary` when the catalog has one.
+
 ## Rules
 
 - **Ids are yours.** Book, shelf, format ids and cursors are opaque strings that Bookserve passes back unchanged. Book ids must be stable: they are stored in `book_sources.external_id` to show "In library" and to avoid adding a book twice. They arrive from the browser, so validate them before building URLs (see `catalogPath` in the Gutenberg integration).

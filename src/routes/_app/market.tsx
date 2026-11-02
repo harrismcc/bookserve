@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Link,
   createFileRoute,
@@ -24,62 +24,68 @@ import {
   SelectTrigger,
   SelectValue,
 } from '#/components/ui/select'
+import type { MarketView } from '#/lib/market-functions'
 import {
   listMarketSources,
   marketAdd,
   marketBook,
   marketBrowse,
 } from '#/lib/market-functions'
-import type {
-  BookDetails,
-  BookSummary,
-  Listing,
-  ShelfLink,
-} from '#/lib/market/sdk'
+import { mergeBooks, mergeHome, mergeShelves } from '#/lib/market/merge'
+import type { MergedBook, MergedShelf, SourceRef } from '#/lib/market/merge'
+import type { BookDetails } from '#/lib/market/sdk'
 import { cn } from '#/lib/utils'
 
-type MarketSearch = { source?: number; shelf?: string; q?: string }
+type MarketSearch = { q?: string; shelf?: SourceRef[] }
 
-const text = (value: unknown) =>
-  typeof value === 'string' || typeof value === 'number'
-    ? String(value)
-    : undefined
+// The router parses values as JSON, so a numeric query arrives as a number.
+function validateShelf(value: unknown) {
+  if (!Array.isArray(value)) return undefined
+  const refs = value.flatMap((r: Record<string, unknown>) =>
+    Number(r?.source) && typeof r?.id === 'string'
+      ? [{ source: Number(r.source), id: r.id }]
+      : [],
+  )
+  return refs.length ? refs : undefined
+}
 
-// Browses the sources set up in Settings → Market sources: the source's home
-// (rows of books), a shelf (`shelf`) or search results (`q`).
+// Browses every source set up in Settings → Market sources at once: their
+// homes, a shelf (`shelf`: one id per source, for shelves merged by name) or
+// search results (`q`). The same book from several sources is shown once.
 export const Route = createFileRoute('/_app/market')({
   beforeLoad: ({ context }) => {
     if (context.user.role !== 'admin') throw redirect({ to: '/' })
   },
-  // The router parses values as JSON, so a numeric query arrives as a number.
   validateSearch: (search: Record<string, unknown>): MarketSearch => ({
-    source: Number(search.source) || undefined,
-    shelf: text(search.shelf),
-    q: text(search.q),
+    q:
+      typeof search.q === 'string' || typeof search.q === 'number'
+        ? String(search.q)
+        : undefined,
+    shelf: validateShelf(search.shelf),
   }),
   loaderDeps: ({ search }) => search,
   loader: async ({ deps }) => {
     const sources = await listMarketSources()
-    const source = sources.find((s) => s.id === deps.source) ?? sources[0]
-    if (!source) return { sources, source: null, view: null }
-    const view = await marketBrowse({
-      data: { sourceId: source.id, shelf: deps.shelf, q: deps.q },
-    })
-    return { sources, source, view }
+    if (!sources.length) return { sources, view: null }
+    const view = await marketBrowse({ data: { q: deps.q, shelf: deps.shelf } })
+    return { sources, view }
   },
   component: Market,
 })
 
-type Source = { id: number; name: string; searchable: boolean }
+type View = MarketView
 type InLibrary = Record<string, string>
 
+const libraryId = (book: MergedBook, inLibrary: InLibrary) =>
+  book.offers.map((o) => inLibrary[`${o.source}:${o.id}`]).find(Boolean)
+
 function Market() {
-  const { sources, source, view } = Route.useLoaderData()
+  const { sources, view } = Route.useLoaderData()
   const search = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
   const loading = useRouterState({ select: (s) => s.status === 'pending' })
 
-  if (!source || !view) {
+  if (!view) {
     return (
       <main className="mx-auto max-w-6xl px-4 py-8">
         <h1 className="text-2xl font-semibold">Market</h1>
@@ -94,45 +100,29 @@ function Market() {
     )
   }
 
+  const multiSource = sources.length > 1
+  const errors = view.results.filter((r) => r.error)
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="mr-auto text-2xl font-semibold">Market</h1>
-        {sources.length > 1 && (
-          <Select
-            value={String(source.id)}
-            onValueChange={(id) => navigate({ search: { source: Number(id) } })}
-          >
-            <SelectTrigger aria-label="Source" className="w-full sm:w-56">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {sources.map((s) => (
-                <SelectItem key={s.id} value={String(s.id)}>
-                  {s.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-      </div>
+      <h1 className="text-2xl font-semibold">Market</h1>
 
-      {source.searchable && (
+      {sources.some((s) => s.searchable) && (
         <form
-          key={`${source.id} ${search.q}`}
+          key={search.q}
           className="relative mt-6"
           onSubmit={(e) => {
             e.preventDefault()
             const q = String(new FormData(e.currentTarget).get('q')).trim()
-            void navigate({ search: { source: source.id, q: q || undefined } })
+            void navigate({ search: { q: q || undefined } })
           }}
         >
           <Search className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
             name="q"
-            placeholder={`Search ${source.name}`}
-            aria-label={`Search ${source.name}`}
+            placeholder="Search"
+            aria-label="Search the Market"
             defaultValue={search.q}
             className="h-12 rounded-full pl-12 text-base md:text-base"
           />
@@ -142,26 +132,24 @@ function Market() {
         </form>
       )}
 
-      <div className={cn('mt-8 transition-opacity', loading && 'opacity-50')}>
-        {view.kind === 'error' && (
-          <p className="text-sm text-destructive">
-            Could not load {source.name}: {view.error}
+      <div
+        className={cn(
+          'mt-8 grid gap-8 transition-opacity',
+          loading && 'opacity-50',
+        )}
+      >
+        {errors.map((r) => (
+          <p key={r.source} className="text-sm text-destructive">
+            Could not load {r.sourceName}: {r.error}
           </p>
-        )}
-        {view.kind === 'home' && (
-          <HomeView
-            source={source}
-            rows={view.home.rows}
-            shelves={view.home.shelves}
-            inLibrary={view.inLibrary}
-          />
-        )}
-        {view.kind === 'listing' && (
+        ))}
+        {view.kind === 'home' ? (
+          <HomeView view={view} multiSource={multiSource} />
+        ) : (
           <ListingView
-            key={`${source.id} ${search.shelf} ${search.q}`}
-            source={source}
-            listing={view.listing}
-            inLibrary={view.inLibrary}
+            key={JSON.stringify([search.q, search.shelf])}
+            view={view}
+            multiSource={multiSource}
           />
         )}
       </div>
@@ -170,25 +158,32 @@ function Market() {
 }
 
 function HomeView({
-  source,
-  rows,
-  shelves,
-  inLibrary,
+  view,
+  multiSource,
 }: {
-  source: Source
-  rows: Array<ShelfLink & { books: BookSummary[] }>
-  shelves: ShelfLink[]
-  inLibrary: InLibrary
+  view: Extract<View, { kind: 'home' }>
+  multiSource: boolean
 }) {
+  const { rows, shelves } = useMemo(
+    () =>
+      mergeHome(
+        view.results.flatMap((r) =>
+          r.value
+            ? [{ ...r.value, source: r.source, sourceName: r.sourceName }]
+            : [],
+        ),
+      ),
+    [view],
+  )
   return (
     <div className="grid gap-10">
       {rows.map((row) => (
-        <section key={row.id} className="min-w-0">
+        <section key={row.title} className="min-w-0">
           <div className="mb-4 flex items-baseline justify-between gap-3">
             <h2 className="text-xl font-semibold">{row.title}</h2>
             <Link
               to="/market"
-              search={{ source: source.id, shelf: row.id }}
+              search={{ shelf: row.refs }}
               className="flex items-center text-sm text-muted-foreground hover:text-foreground"
             >
               See all
@@ -197,11 +192,14 @@ function HomeView({
           </div>
           <ul className="-mx-4 flex snap-x scroll-px-4 gap-5 overflow-x-auto px-4 pb-2">
             {row.books.map((book) => (
-              <li key={book.id} className="w-36 shrink-0 snap-start sm:w-40">
+              <li
+                key={`${book.offers[0].source}:${book.offers[0].id}`}
+                className="w-36 shrink-0 snap-start sm:w-40"
+              >
                 <BookCard
-                  source={source}
                   book={book}
-                  libraryBookId={inLibrary[book.id]}
+                  libraryBookId={libraryId(book, view.inLibrary)}
+                  multiSource={multiSource}
                 />
               </li>
             ))}
@@ -211,7 +209,7 @@ function HomeView({
       {shelves.length > 0 && (
         <section>
           <h2 className="mb-4 text-xl font-semibold">Browse</h2>
-          <ShelfGrid source={source} shelves={shelves} />
+          <ShelfGrid shelves={shelves} />
         </section>
       )}
     </div>
@@ -219,63 +217,93 @@ function HomeView({
 }
 
 function ListingView({
-  source,
-  listing,
-  inLibrary: initialInLibrary,
+  view,
+  multiSource,
 }: {
-  source: Source
-  listing: Listing
-  inLibrary: InLibrary
+  view: Extract<View, { kind: 'listing' }>
+  multiSource: boolean
 }) {
   const search = Route.useSearch()
-  const [books, setBooks] = useState(listing.books)
-  const [inLibrary, setInLibrary] = useState(initialInLibrary)
-  const [cursor, setCursor] = useState(listing.nextCursor)
+  const lists = (results: typeof view.results) =>
+    results.map((r) => ({
+      source: r.source,
+      sourceName: r.sourceName,
+      items: r.value?.books ?? [],
+    }))
+  const cursorsOf = (results: typeof view.results) =>
+    Object.fromEntries(
+      results.flatMap((r) =>
+        r.value?.nextCursor ? [[String(r.source), r.value.nextCursor]] : [],
+      ),
+    ) as Record<string, string>
+
+  const [books, setBooks] = useState(() => mergeBooks([], lists(view.results)))
+  const [inLibrary, setInLibrary] = useState(view.inLibrary)
+  const [cursors, setCursors] = useState(() => cursorsOf(view.results))
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState('')
+  const shelves = useMemo(
+    () =>
+      mergeShelves(
+        view.results.map((r) => ({
+          source: r.source,
+          sourceName: r.sourceName,
+          items: r.value?.shelves ?? [],
+        })),
+      ),
+    [view],
+  )
+  const title =
+    search.q ?? view.results.find((r) => r.value)?.value?.title ?? 'Market'
+  const hasMore = Object.keys(cursors).length > 0
 
   async function loadMore() {
-    if (!cursor) return
     setLoadingMore(true)
     setError('')
-    const next = await marketBrowse({
-      data: { sourceId: source.id, shelf: search.shelf, q: search.q, cursor },
-    }).catch((err: Error) => ({ kind: 'error' as const, error: err.message }))
-    setLoadingMore(false)
-    if (next.kind !== 'listing') {
-      setError(next.kind === 'error' ? next.error : 'Could not load more')
-      return
+    try {
+      const next = await marketBrowse({
+        data: { q: search.q, shelf: search.shelf, cursors },
+      })
+      if (next.kind !== 'listing') return
+      setBooks((prev) => mergeBooks(prev, lists(next.results)))
+      setInLibrary((prev) => ({ ...prev, ...next.inLibrary }))
+      // A source that fails keeps its cursor, so "Load more" retries it.
+      setCursors({
+        ...Object.fromEntries(
+          next.results.flatMap((r) =>
+            r.error ? [[String(r.source), cursors[r.source]]] : [],
+          ),
+        ),
+        ...cursorsOf(next.results),
+      })
+      const failed = next.results.filter((r) => r.error)
+      if (failed.length) {
+        setError(
+          failed
+            .map((r) => `Could not load ${r.sourceName}: ${r.error}`)
+            .join('\n'),
+        )
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not load more')
+    } finally {
+      setLoadingMore(false)
     }
-    // Pages can overlap when the catalog changes between requests.
-    setBooks((prev) => {
-      const seen = new Set(prev.map((b) => b.id))
-      return [...prev, ...next.listing.books.filter((b) => !seen.has(b.id))]
-    })
-    setInLibrary((prev) => ({ ...prev, ...next.inLibrary }))
-    setCursor(next.listing.nextCursor)
   }
 
   return (
     <div className="grid gap-8">
       <nav className="flex min-w-0 items-center gap-1 text-sm text-muted-foreground">
-        <Link
-          to="/market"
-          search={{ source: source.id }}
-          className="shrink-0 hover:text-foreground"
-        >
-          {source.name}
+        <Link to="/market" className="shrink-0 hover:text-foreground">
+          Market
         </Link>
         <ChevronRight className="size-4 shrink-0" />
-        <h2 className="truncate font-medium text-foreground">
-          {listing.title}
-        </h2>
+        <h2 className="truncate font-medium text-foreground">{title}</h2>
       </nav>
 
-      {listing.shelves.length > 0 && (
-        <ShelfGrid source={source} shelves={listing.shelves} />
-      )}
+      {shelves.length > 0 && <ShelfGrid shelves={shelves} />}
 
-      {books.length === 0 && listing.shelves.length === 0 && (
+      {books.length === 0 && shelves.length === 0 && (
         <div className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-lg border border-dashed text-muted-foreground">
           <Search className="size-8" />
           <p className="text-sm">Nothing found</p>
@@ -285,21 +313,25 @@ function ListingView({
       {books.length > 0 && (
         <ul className="grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {books.map((book) => (
-            <li key={book.id}>
+            <li key={`${book.offers[0].source}:${book.offers[0].id}`}>
               <BookCard
-                source={source}
                 book={book}
-                libraryBookId={inLibrary[book.id]}
+                libraryBookId={libraryId(book, inLibrary)}
+                multiSource={multiSource}
               />
             </li>
           ))}
         </ul>
       )}
 
-      {(cursor || error) && (
+      {(hasMore || error) && (
         <div className="flex flex-col items-center gap-2">
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          {cursor && (
+          {error && (
+            <p className="text-sm whitespace-pre-line text-destructive">
+              {error}
+            </p>
+          )}
+          {hasMore && (
             <Button variant="outline" onClick={loadMore} disabled={loadingMore}>
               {loadingMore && <Loader2 className="animate-spin" />}
               {loadingMore ? 'Loading…' : 'Load more'}
@@ -311,20 +343,14 @@ function ListingView({
   )
 }
 
-function ShelfGrid({
-  source,
-  shelves,
-}: {
-  source: Source
-  shelves: ShelfLink[]
-}) {
+function ShelfGrid({ shelves }: { shelves: MergedShelf[] }) {
   return (
     <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {shelves.map((shelf) => (
-        <li key={shelf.id}>
+        <li key={shelf.refs.map((r) => `${r.source}:${r.id}`).join(' ')}>
           <Link
             to="/market"
-            search={{ source: source.id, shelf: shelf.id }}
+            search={{ shelf: shelf.refs }}
             className="group flex h-full items-center gap-3 rounded-xl border bg-card px-4 py-3.5 transition-colors hover:bg-accent"
           >
             <div className="min-w-0 flex-1">
@@ -356,15 +382,15 @@ function formatSize(bytes: number | null) {
 }
 
 // A book: the cover and title open its details; the button adds the best
-// format (the dialog lets you pick another).
+// format from the first source that has it (the dialog lets you pick).
 function BookCard({
-  source,
   book,
   libraryBookId,
+  multiSource,
 }: {
-  source: Source
-  book: BookSummary
+  book: MergedBook
   libraryBookId: string | undefined
+  multiSource: boolean
 }) {
   const [open, setOpen] = useState(false)
   const [state, setState] = useState<AddState>(
@@ -373,18 +399,28 @@ function BookCard({
       : { status: 'idle' },
   )
 
-  async function add(formatId?: string) {
+  async function add(offer?: { source: number; id: string; formatId: string }) {
     setState({ status: 'adding' })
     try {
-      if (!formatId) {
-        const { book: details } = await marketBook({
-          data: { sourceId: source.id, bookId: book.id },
-        })
-        formatId = details.formats[0]?.id
-        if (!formatId) throw new Error('No EPUB available')
+      if (!offer) {
+        for (const o of book.offers) {
+          const { book: details } = await marketBook({
+            data: { sourceId: o.source, bookId: o.id },
+          }).catch(() => ({ book: null }))
+          const formatId = details?.formats[0]?.id
+          if (formatId) {
+            offer = { source: o.source, id: o.id, formatId }
+            break
+          }
+        }
+        if (!offer) throw new Error('No EPUB available')
       }
       const { bookId } = await marketAdd({
-        data: { sourceId: source.id, bookId: book.id, formatId },
+        data: {
+          sourceId: offer.source,
+          bookId: offer.id,
+          formatId: offer.formatId,
+        },
       })
       setState({ status: 'added', bookId })
     } catch (err) {
@@ -428,8 +464,8 @@ function BookCard({
       </div>
       {open && (
         <BookDialog
-          source={source}
           book={book}
+          multiSource={multiSource}
           onClose={() => setOpen(false)}
           state={state}
           onAdded={(bookId) => setState({ status: 'added', bookId })}
@@ -478,46 +514,83 @@ function AddButton({
   )
 }
 
-// Loads the book's details when opened.
+type OfferDetails = {
+  source: number
+  sourceName: string
+  id: string
+  book: BookDetails | null
+  error: string | null
+}
+
+// Loads the book's details from every source that has it when opened. Shows
+// the first source's details and every source's formats.
 function BookDialog({
-  source,
   book,
+  multiSource,
   onClose,
   state,
   onAdded,
   onAdd,
 }: {
-  source: Source
-  book: BookSummary
+  book: MergedBook
+  multiSource: boolean
   onClose: () => void
   state: AddState
   onAdded: (bookId: string) => void
-  onAdd: (formatId: string) => void
+  onAdd: (offer: { source: number; id: string; formatId: string }) => void
 }) {
-  const [details, setDetails] = useState<BookDetails | null>(null)
-  const [error, setError] = useState('')
-  const [formatId, setFormatId] = useState<string>()
+  const [offers, setOffers] = useState<OfferDetails[] | null>(null)
+  const [choice, setChoice] = useState<string>()
 
   useEffect(() => {
     let current = true
-    marketBook({ data: { sourceId: source.id, bookId: book.id } })
-      .then((result) => {
-        if (!current) return
-        setDetails(result.book)
-        setFormatId(result.book.formats[0]?.id)
-        if (result.libraryBookId) onAdded(result.libraryBookId)
-      })
-      .catch((err: Error) => current && setError(err.message))
+    void Promise.all(
+      book.offers.map(async (offer) => {
+        try {
+          const result = await marketBook({
+            data: { sourceId: offer.source, bookId: offer.id },
+          })
+          if (result.libraryBookId && current) onAdded(result.libraryBookId)
+          return { ...offer, book: result.book, error: null }
+        } catch (err) {
+          return {
+            ...offer,
+            book: null,
+            error: err instanceof Error ? err.message : 'Request failed',
+          }
+        }
+      }),
+    ).then((loaded) => {
+      if (!current) return
+      setOffers(loaded)
+      const first = loaded.find((o) => o.book?.formats.length)
+      if (first) setChoice(`${first.source}|${first.book!.formats[0].id}`)
+    })
     return () => {
       current = false
     }
     // Loads once per open; onAdded is a fresh closure each render.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
-  }, [source.id, book.id])
+  }, [book])
 
+  const details = offers?.find((o) => o.book)?.book
   const shown = details ?? book
-  const formats = details?.formats ?? []
-  const format = formats.find((f) => f.id === formatId)
+  const formats = (offers ?? []).flatMap((o) =>
+    (o.book?.formats ?? []).map((f) => ({
+      ...f,
+      key: `${o.source}|${f.id}`,
+      offer: o,
+      text: [multiSource && o.sourceName, f.label, formatSize(f.size)]
+        .filter(Boolean)
+        .join(' · '),
+    })),
+  )
+  const format = formats.find((f) => f.key === choice)
+  const added = state.status === 'added'
+  const description = offers?.map((o) => o.book?.description).find(Boolean)
+  const shelves = (offers ?? []).flatMap((o) =>
+    (o.book?.shelves ?? []).map((s) => ({ ...s, source: o.source })),
+  )
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -526,7 +599,7 @@ function BookDialog({
           <BookCover
             title={shown.title}
             authors={shown.authors}
-            coverUrl={shown.coverUrl}
+            coverUrl={book.coverUrl ?? shown.coverUrl}
             className="mx-auto w-40 sm:w-full"
           />
           <div className="flex min-w-0 flex-col gap-4">
@@ -537,27 +610,31 @@ function BookDialog({
               <DialogDescription>{shown.authors.join(', ')}</DialogDescription>
             </div>
 
-            {!details && !error && (
+            {!offers && (
               <Loader2 className="size-5 animate-spin text-muted-foreground" />
             )}
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {offers
+              ?.filter((o) => o.error)
+              .map((o) => (
+                <p key={o.source} className="text-sm text-destructive">
+                  Could not load {o.sourceName}: {o.error}
+                </p>
+              ))}
 
-            {details && formats.length === 0 && state.status !== 'added' && (
+            {offers && formats.length === 0 && !added && (
               <p className="text-sm text-muted-foreground">No EPUB available</p>
             )}
-            {details && (formats.length > 0 || state.status === 'added') && (
+            {offers && (formats.length > 0 || added) && (
               <>
-                {formats.length > 1 && state.status !== 'added' && (
-                  <Select value={formatId} onValueChange={setFormatId}>
+                {formats.length > 1 && !added && (
+                  <Select value={choice} onValueChange={setChoice}>
                     <SelectTrigger aria-label="Format" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       {formats.map((f) => (
-                        <SelectItem key={f.id} value={f.id}>
-                          {[f.label, formatSize(f.size)]
-                            .filter(Boolean)
-                            .join(' · ')}
+                        <SelectItem key={f.key} value={f.key}>
+                          {f.text}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -567,11 +644,18 @@ function BookDialog({
                   <AddButton
                     state={state}
                     disabled={!format}
-                    onAdd={() => format && onAdd(format.id)}
+                    onAdd={() =>
+                      format &&
+                      onAdd({
+                        source: format.offer.source,
+                        id: format.offer.id,
+                        formatId: format.id,
+                      })
+                    }
                   />
-                  {formats.length === 1 && formatSize(formats[0].size) && (
+                  {formats.length === 1 && !added && (
                     <span className="text-sm text-muted-foreground">
-                      {formatSize(formats[0].size)}
+                      {formats[0].text}
                     </span>
                   )}
                 </div>
@@ -581,19 +665,21 @@ function BookDialog({
               <p className="text-sm text-destructive">{state.message}</p>
             )}
 
-            {details?.description && (
+            {description && (
               <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
-                {details.description}
+                {description}
               </p>
             )}
 
-            {details && details.shelves.length > 0 && (
+            {shelves.length > 0 && (
               <ul className="flex flex-wrap gap-2">
-                {details.shelves.map((shelf) => (
-                  <li key={shelf.id}>
+                {shelves.map((shelf) => (
+                  <li key={`${shelf.source}:${shelf.id}`}>
                     <Link
                       to="/market"
-                      search={{ source: source.id, shelf: shelf.id }}
+                      search={{
+                        shelf: [{ source: shelf.source, id: shelf.id }],
+                      }}
                       onClick={onClose}
                       className="block rounded-full border px-3 py-1 text-xs transition-colors hover:bg-accent"
                     >

@@ -48,20 +48,27 @@ function loadSource(sourceId: number) {
   }
 }
 
-// Market book ids already in the library, as external id → library book id.
-function inLibrary(sourceId: number, externalIds: string[]) {
-  if (!externalIds.length) return {}
+// Market books already in the library, as "<source id>:<book id>" → library
+// book id.
+function inLibrary(refs: Array<{ source: number; id: string }>) {
+  if (!refs.length) return {}
   const rows = db
-    .select({ bookId: bookSources.bookId, externalId: bookSources.externalId })
+    .select({
+      bookId: bookSources.bookId,
+      sourceId: bookSources.sourceId,
+      externalId: bookSources.externalId,
+    })
     .from(bookSources)
     .where(
       and(
-        eq(bookSources.sourceId, sourceId),
-        inArray(bookSources.externalId, externalIds),
+        inArray(bookSources.sourceId, [...new Set(refs.map((r) => r.source))]),
+        inArray(bookSources.externalId, [...new Set(refs.map((r) => r.id))]),
       ),
     )
     .all()
-  return Object.fromEntries(rows.map((r) => [r.externalId, r.bookId]))
+  return Object.fromEntries(
+    rows.map((r) => [`${r.sourceId}:${r.externalId}`, r.bookId]),
+  ) as Record<string, string>
 }
 
 export const listMarketSources = createServerFn({ method: 'GET' }).handler(
@@ -157,54 +164,88 @@ export const removeMarketSource = createServerFn({ method: 'POST' })
 
 export type MarketView = Awaited<ReturnType<typeof marketBrowse>>
 
-// The source's home, a shelf (`shelf`), or search results (`q`). Errors are
-// returned, not thrown, so the page can show them in place.
+// Every source's home, or a listing: search results (`q`, from every source
+// with search) or a shelf (`shelf`, one id per source, since shelves with the
+// same name are merged). `cursors` fetches the next page of the sources it
+// names. Each source answers on its own: one failing doesn't hide the others.
 export const marketBrowse = createServerFn({ method: 'GET' })
   .validator(
     (data: {
-      sourceId: number
-      shelf?: string
       q?: string
-      cursor?: string
+      shelf?: Array<{ source: number; id: string }>
+      cursors?: Record<string, string>
     }) => ({
-      sourceId: Number(data.sourceId),
-      shelf: str(data.shelf) || null,
       q: str(data.q, 200) || null,
-      cursor: str(data.cursor) || null,
+      shelf: Array.isArray(data.shelf)
+        ? data.shelf.map((r) => ({ source: Number(r.source), id: str(r.id) }))
+        : null,
+      cursors: Object.fromEntries(
+        Object.entries(data.cursors ?? {}).map(([k, v]) => [Number(k), str(v)]),
+      ) as Record<number, string>,
     }),
   )
   .handler(async ({ data }) => {
     await requireAdmin()
-    const { row, integration, ctx } = loadSource(data.sourceId)
-    try {
-      if (data.q || data.shelf) {
-        const listing = cleanListing(
-          data.q
-            ? await (integration.search?.(ctx, data.q, data.cursor) ??
-                Promise.reject(new Error('This source has no search')))
-            : await integration.shelf(ctx, data.shelf!, data.cursor),
-        )
-        return {
-          kind: 'listing' as const,
-          listing,
-          inLibrary: inLibrary(
-            row.id,
-            listing.books.map((b) => b.id),
-          ),
-        }
-      }
-      const home = cleanHome(await integration.home(ctx))
-      return {
-        kind: 'home' as const,
-        home,
-        inLibrary: inLibrary(
-          row.id,
-          home.rows.flatMap((r) => r.books.map((b) => b.id)),
-        ),
-      }
-    } catch (err) {
-      return { kind: 'error' as const, error: message(err) }
+    const sources = db
+      .select()
+      .from(marketSources)
+      .orderBy(asc(marketSources.id))
+      .all()
+      .filter((row) => INTEGRATIONS[row.integration])
+      .map((row) => ({
+        row,
+        integration: INTEGRATIONS[row.integration],
+        ctx: createContext(String(row.id), row.settings),
+      }))
+    const paging = Object.keys(data.cursors).length > 0
+
+    async function each<S extends (typeof sources)[number], T>(
+      list: S[],
+      load: (source: S) => Promise<T>,
+    ) {
+      return Promise.all(
+        list.map(async (source) => {
+          const base = { source: source.row.id, sourceName: source.row.name }
+          try {
+            return { ...base, value: await load(source), error: null }
+          } catch (err) {
+            return { ...base, value: null, error: message(err) }
+          }
+        }),
+      )
     }
+
+    if (!data.q && !data.shelf) {
+      const results = await each(sources, async (s) =>
+        cleanHome(await s.integration.home(s.ctx)),
+      )
+      const ids = results.flatMap((r) =>
+        (r.value?.rows ?? []).flatMap((row) =>
+          row.books.map((b) => ({ source: r.source, id: b.id })),
+        ),
+      )
+      return { kind: 'home' as const, results, inLibrary: inLibrary(ids) }
+    }
+
+    const targets = sources.flatMap((s) => {
+      const cursor = data.cursors[s.row.id] ?? null
+      if (paging && !cursor) return []
+      if (data.q)
+        return s.integration.search ? [{ ...s, id: data.q, cursor }] : []
+      const ref = data.shelf!.find((r) => r.source === s.row.id)
+      return ref ? [{ ...s, id: ref.id, cursor }] : []
+    })
+    const results = await each(targets, async (t) =>
+      cleanListing(
+        data.q
+          ? await t.integration.search!(t.ctx, t.id, t.cursor)
+          : await t.integration.shelf(t.ctx, t.id, t.cursor),
+      ),
+    )
+    const ids = results.flatMap((r) =>
+      (r.value?.books ?? []).map((b) => ({ source: r.source, id: b.id })),
+    )
+    return { kind: 'listing' as const, results, inLibrary: inLibrary(ids) }
   })
 
 export const marketBook = createServerFn({ method: 'GET' })
@@ -218,7 +259,10 @@ export const marketBook = createServerFn({ method: 'GET' })
     const book = cleanDetails(await integration.book(ctx, data.bookId))
     return {
       book: { ...book, id: data.bookId },
-      libraryBookId: inLibrary(row.id, [data.bookId])[data.bookId] ?? null,
+      libraryBookId:
+        inLibrary([{ source: row.id, id: data.bookId }])[
+          `${row.id}:${data.bookId}`
+        ] ?? null,
     }
   })
 
@@ -235,7 +279,9 @@ export const marketAdd = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     await requireAdmin()
     const { row, integration, ctx } = loadSource(data.sourceId)
-    const existing = inLibrary(row.id, [data.bookId])[data.bookId]
+    const existing = inLibrary([{ source: row.id, id: data.bookId }])[
+      `${row.id}:${data.bookId}`
+    ]
     if (existing) return { bookId: existing }
 
     const details = cleanDetails(await integration.book(ctx, data.bookId))
