@@ -1,0 +1,21 @@
+how do I sign in to the portal?
+
+---
+
+I dont like the look of the search result list page, I want a more "store" like experience with things like covers. Can you do a design pass there?
+
+---
+
+Do the multiple versions share the same ISBN? I guess I'm trying to wrap my head around the odd way they seem to structure things
+
+---
+
+I think maybe we want to scrap general OPDS support and create a pluggable system of marketplace integrations instead, one of which can be for gutenberg. That will allow us to create bespoke code for each integration we may want to add so that we can standardize the experience for the user.
+
+So can you figure out and propose what this standard for building these integrations should be? Best case scenario would be a standard that would make it easy for 3rd party folks to build their own, so we need some kind of class/interface/easy way to define a plugin
+
+---
+
+1. Yes
+2. Yes, but build a more bespoke gutenberg one
+3. Sure that makes sense. Each connected plugin should have a unique ID right? So we can use that to associate with the specific plugin that added it
