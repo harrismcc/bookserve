@@ -1,0 +1,1 @@
+there should be some kind of documentation to make it clear to devs/agents how this plugin system is supposed to work so that they know how to use it and the goals. I worry without that agents will just start writing bespoke 1-off code and not using the plugin system
