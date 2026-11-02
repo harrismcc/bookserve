@@ -169,3 +169,46 @@ export const bookFiles = sqliteTable(
     index('book_files_hash_idx').on(table.hash),
   ],
 )
+
+// Market sources: an integration (src/lib/market/integrations) plus the
+// settings an admin entered for it. The migration that creates this table
+// seeds Project Gutenberg.
+export const marketSources = sqliteTable('market_sources', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  // Integration id, e.g. `gutenberg` or `opds`.
+  integration: text('integration').notNull(),
+  name: text('name').notNull(),
+  settings: text('settings', { mode: 'json' })
+    .$type<Record<string, string>>()
+    .default(sql`'{}'`)
+    .notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .notNull(),
+})
+
+// Where a book added from the Market came from. `integration` and
+// `externalId` are kept when the source is removed.
+export const bookSources = sqliteTable(
+  'book_sources',
+  {
+    bookId: text('book_id')
+      .primaryKey()
+      .references(() => books.id, { onDelete: 'cascade' }),
+    sourceId: integer('source_id').references(() => marketSources.id, {
+      onDelete: 'set null',
+    }),
+    integration: text('integration').notNull(),
+    // The book's id within the integration.
+    externalId: text('external_id').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+  },
+  (table) => [
+    index('book_sources_source_external_idx').on(
+      table.sourceId,
+      table.externalId,
+    ),
+  ],
+)

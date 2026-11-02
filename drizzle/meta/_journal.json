@@ -15,6 +15,13 @@
       "when": 1793572393206,
       "tag": "0001_library",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793585114378,
+      "tag": "0002_market",
+      "breakpoints": true
     }
   ]
 }
