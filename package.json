@@ -18,7 +18,8 @@
     "db:push": "drizzle-kit push",
     "db:pull": "drizzle-kit pull",
     "db:studio": "drizzle-kit studio",
-    "typecheck": "tsrs --noEmit"
+    "typecheck": "tsrs --noEmit",
+    "db:seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",

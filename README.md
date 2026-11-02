@@ -28,6 +28,7 @@ Open http://localhost:3000 and create the admin account. On first boot the conta
 ```bash
 pnpm install
 pnpm dev          # http://localhost:3000, data in ./data
+pnpm db:seed      # users admin/password and reader/password, plus sample books
 pnpm lint
 pnpm typecheck
 pnpm build        # then: node .output/server/index.mjs
