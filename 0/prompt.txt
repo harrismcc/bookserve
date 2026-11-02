@@ -1,0 +1,1 @@
+We should be able to delete a book from the library, which will also delete the file. A confirm modal should make sure the user knows this

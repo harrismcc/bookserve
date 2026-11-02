@@ -1,0 +1,40 @@
+{
+  "cli_version": "0.12.2",
+  "checkpoint_id": "01M6CVSP4FD8G4NY945Y2RFTTA",
+  "session_id": "T-01a199b8-b190-74ed-af14-19dc584edf88",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-02T00:50:56.995130963Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/plan.md",
+    "src/lib/book-functions.ts",
+    "src/lib/scanner.ts",
+    "src/routes/_app/books/$bookId.tsx"
+  ],
+  "agent": "Amp",
+  "model": "",
+  "turn_id": "5ad3e51e7694",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 64638,
+    "cache_read_tokens": 1665852,
+    "output_tokens": 10674,
+    "api_call_count": 22
+  },
+  "redaction": {
+    "replacements": 0,
+    "layers": {
+      "betterleaks": 0,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 0,
+      "credentialed_uri": 0,
+      "entropy": 0,
+      "key_context": 0,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  }
+}
