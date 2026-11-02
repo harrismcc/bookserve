@@ -8,6 +8,7 @@ Built-in integrations:
 
 - `gutenberg`: Project Gutenberg (`src/lib/market/integrations/gutenberg.ts`). Seeded as the default source.
 - `opds`: any OPDS 1.x catalog (`src/lib/market/integrations/opds.ts`).
+- `z-library`: Z-Library (`src/lib/market/integrations/z-library.ts`), through the unofficial EAPI its Android app uses. Needs the account's mirror URL; browsing works logged out, while adding books needs either account credentials or the `remix_userid`/`remix_userkey` session cookies. Some mirrors sit behind bot protection and cannot answer the API; prefer one that returns JSON from `/eapi/info`.
 
 ## Goals
 
@@ -118,7 +119,7 @@ The Market shows every source at once, merging the same book from different sour
 ## Rules
 
 - **Ids are yours.** Book, shelf, format ids and cursors are opaque strings that Bookserve passes back unchanged. Book ids must be stable: they are stored in `book_sources.external_id` to show "In library" and to avoid adding a book twice. They arrive from the browser, so validate them before building URLs (see `catalogPath` in the Gutenberg integration).
-- **Use `ctx.fetch`**, not `fetch`: it takes `method`, `headers`, `body` and `timeoutMs`, allows only http(s) URLs, adds a timeout and Bookserve's User-Agent, and throws on network errors and non-2xx responses with a message the UI shows as is. Throw an `Error` with a short message for anything else ("Unknown book").
+- **Use `ctx.fetch`**, not `fetch`: it takes `method`, `headers`, `body` and `timeoutMs`, allows only http(s) URLs, adds a timeout and Bookserve's User-Agent, and throws on network errors and non-2xx responses with a message the UI shows as is. Set `allowErrorStatus` when a store answers errors with a useful body; check `res.ok` yourself. Throw an `Error` with a short message for anything else ("Unknown book").
 - **Use `ctx.cached(key, ttlMs, load)`** for anything `book()` and `download()` refetch. Its cache is per source and in memory.
 - **Return plain data.** Text is plain (no HTML; the SDK's `htmlToText` converts). Dates are `YYYY`, `YYYY-MM` or `YYYY-MM-DD`. Cover URLs are http(s). Bookserve trims and drops anything malformed (`src/lib/market/host.ts`), so a buggy integration can't break the page.
 - **EPUB only.** List only EPUB formats; return an empty `formats` list for books without one. The download is checked to be a valid EPUB before it is added.

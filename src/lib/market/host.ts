@@ -1,6 +1,7 @@
 import { HttpError, request } from '#/lib/metadata/http'
 import { gutenberg } from '#/lib/market/integrations/gutenberg'
 import { opds } from '#/lib/market/integrations/opds'
+import { zlibrary } from '#/lib/market/integrations/z-library'
 import { MARKET_API_VERSION } from '#/lib/market/sdk'
 import type {
   BookDetails,
@@ -19,7 +20,7 @@ import type {
 // Built-in integrations. Add new ones here.
 export const INTEGRATIONS: Record<string, MarketIntegration> =
   Object.fromEntries(
-    [gutenberg, opds]
+    [gutenberg, opds, zlibrary]
       .filter((i) => i.apiVersion === MARKET_API_VERSION)
       .map((i) => [i.id, i]),
   )
@@ -54,7 +55,7 @@ export function createContext(
     async fetch(url, init) {
       if (!/^https?:\/\//i.test(url)) throw new Error('Invalid URL')
       const res = await request(url, init?.timeoutMs ?? timeoutMs, init)
-      if (!res.ok) throw new HttpError(res.status)
+      if (!res.ok && !init?.allowErrorStatus) throw new HttpError(res.status)
       return res
     },
     cached<T>(key: string, ttlMs: number, load: () => Promise<T>) {

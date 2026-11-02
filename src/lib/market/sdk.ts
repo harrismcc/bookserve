@@ -90,6 +90,9 @@ export type FetchInit = {
   headers?: Record<string, string>
   body?: string | URLSearchParams
   timeoutMs?: number
+  // Return non-2xx responses instead of throwing, so an integration can read
+  // an error body. Callers must check `ok` themselves.
+  allowErrorStatus?: boolean
 }
 
 export type MarketIntegration = {
