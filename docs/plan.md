@@ -13,7 +13,7 @@ First boot shows a setup screen that creates the admin. After that, signed-in us
 - **One library directory** for now (`BOOKSERVE_LIBRARY_DIR`), with a schema that allows more later.
 - **Paths from env:** `BOOKSERVE_DATA_DIR` (SQLite DB, covers, generated secret) and `BOOKSERVE_LIBRARY_DIR`. Dev defaults live under `./data`; the container uses `/config` and `/books`.
 - **Boot is self-sufficient:** create directories, run Drizzle migrations, and generate and persist the auth secret if none is set.
-- **Metadata:** read embedded EPUB metadata and cover on scan. Online matching is manual (as in Audiobookshelf). Open Library comes first (no key), then Google Books (optional key). Hardcover is later and optional. Matched metadata and covers are stored in the DB and data dir, never written into book files.
+- **Metadata:** read embedded EPUB metadata and cover on scan. Online matching is manual (as in Audiobookshelf). Open Library comes first (no key), then Google Books (optional key). Hardcover is later and optional. Matched metadata and covers are stored in the DB and data dir, never written into book files. Priority is two layers only: embedded EPUB metadata, then matched fields on top. No sidecar files (`metadata.opf`, `metadata.json`) and no metadata parsed from folder names.
 - **Dependencies for scanning:** `fflate` (unzip) + `fast-xml-parser` (OPF). Both are pure JS. EPUB first; PDF later.
 - **Uploads** are saved to `<library>/<Author>/<Title>/<file>`. This is the only place the app writes into the library.
 
