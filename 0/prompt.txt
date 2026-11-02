@@ -1,0 +1,1 @@
+Can you add a new market integration for z-library? I think they have an API but if not you can look for how other open source projects similar to ours interacts with. To connect it users would have to specify the mirror URL they want (as well as anything else you think is relevant)
