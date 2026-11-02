@@ -1,0 +1,5 @@
+Have a Task subagent review all changes since merge base a5e5ddb18886f52bc83fe223e09c0b3f52a1591e, including untracked files and report its findings.
+
+---
+
+Okay lets fix all of that stuff!
