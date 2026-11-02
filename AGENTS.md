@@ -48,6 +48,10 @@ Add shadcn components with `pnpm dlx shadcn@latest add <component>`.
 
 Use `pnpm db:generate` to create committed migrations for schema changes; don't rely on `db:push`, since self-hosted installs upgrade by running migrations on startup.
 
+## Market integrations
+
+Online stores are pluggable **Market integrations** (`src/lib/market/`). To support a new store or catalog, write an integration as described in `docs/market-integrations.md`; never add store-specific routes, server functions, tables or UI. If the integration API lacks something, extend it for every integration.
+
 ## Principles
 
 - Make the best decision that will elevate all three: the user experience (UX), developer experience (DX), and agent experience (AX) always, without breaking anything.
