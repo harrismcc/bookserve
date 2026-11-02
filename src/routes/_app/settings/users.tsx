@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createFileRoute, useRouter } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { MoreHorizontal } from 'lucide-react'
 
 import {
@@ -43,6 +43,7 @@ import {
   TableHeader,
   TableRow,
 } from '#/components/ui/table'
+import { useAction } from '#/hooks/use-action'
 import {
   createUser,
   listUsers,
@@ -57,31 +58,6 @@ export const Route = createFileRoute('/_app/settings/users')({
 })
 
 type User = Awaited<ReturnType<typeof listUsers>>[number]
-
-// Runs a server function, keeps its error for inline display, and reloads the
-// route data on success.
-function useAction() {
-  const router = useRouter()
-  const [error, setError] = useState('')
-  const [pending, setPending] = useState(false)
-
-  async function run(action: () => Promise<unknown>) {
-    setPending(true)
-    setError('')
-    try {
-      await action()
-      await router.invalidate()
-      return true
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Request failed')
-      return false
-    } finally {
-      setPending(false)
-    }
-  }
-
-  return { error, setError, pending, run }
-}
 
 function Users() {
   const users = Route.useLoaderData()
