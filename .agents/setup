@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# Prepares a fresh Amp orb: Node dependencies, the Entire CLI, and the
+# entire-agent-amp external agent. Idempotent; a warm run skips installed tools.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+GO_VERSION=1.26.10
+ENTIRE_VERSION=0.12.2
+# entireio/external-agents has no releases; pin the commit to build from.
+ENTIRE_AGENT_AMP_REV=23c64f2861ddbfd2670cffafeb45f86bad6ebc2b
+
+bin_dir="$HOME/.local/bin" # already on PATH in orb login shells
+go_root="$HOME/.local/go"
+case "$(uname -m)" in
+  x86_64 | amd64) arch=amd64 ;;
+  aarch64 | arm64) arch=arm64 ;;
+  *) echo "unsupported arch: $(uname -m)" >&2; exit 1 ;;
+esac
+mkdir -p "$bin_dir"
+
+step() {
+  local name=$1 start=$SECONDS
+  shift
+  echo "==> $name"
+  "$@"
+  echo "    $name took $((SECONDS - start))s"
+}
+
+install_entire() {
+  if "$bin_dir/entire" version 2>/dev/null | grep -Fq "Entire CLI $ENTIRE_VERSION"; then
+    echo "    entire $ENTIRE_VERSION already installed"
+    return
+  fi
+  local tmp
+  tmp=$(mktemp -d)
+  curl -fsSL "https://github.com/entireio/cli/releases/download/v$ENTIRE_VERSION/entire_linux_$arch.tar.gz" |
+    tar xz -C "$tmp" entire git-remote-entire
+  install -m 755 "$tmp/entire" "$tmp/git-remote-entire" "$bin_dir/"
+  rm -rf "$tmp"
+}
+
+install_go() {
+  if "$go_root/bin/go" version 2>/dev/null | grep -Fq "go$GO_VERSION "; then
+    echo "    go $GO_VERSION already installed"
+    return
+  fi
+  rm -rf "$go_root"
+  curl -fsSL "https://go.dev/dl/go$GO_VERSION.linux-$arch.tar.gz" | tar xz -C "$(dirname "$go_root")"
+}
+
+install_entire_agent_amp() {
+  # The pseudo-version embedded in the binary ends with the first 12 chars of the commit.
+  if "$go_root/bin/go" version -m "$bin_dir/entire-agent-amp" 2>/dev/null | grep -Fq "${ENTIRE_AGENT_AMP_REV:0:12}"; then
+    echo "    entire-agent-amp ${ENTIRE_AGENT_AMP_REV:0:12} already installed"
+    return
+  fi
+  GOBIN="$bin_dir" "$go_root/bin/go" install \
+    "github.com/entireio/external-agents/agents/entire-agent-amp/cmd/entire-agent-amp@$ENTIRE_AGENT_AMP_REV"
+}
+
+step "pnpm install" pnpm install --frozen-lockfile
+step "entire CLI" install_entire
+step "go toolchain" install_go
+step "entire-agent-amp" install_entire_agent_amp
+# Entire's git hooks are installed by .agents/resume, because Amp rewrites the
+# global git hooks directory when an orb activates.

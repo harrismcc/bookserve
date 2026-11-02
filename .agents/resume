@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Re-installs Entire's git hooks. Amp rewrites the global git hooks directory
+# (core.hooksPath) on activation; `entire enable` re-chains Amp's hook after
+# Entire's and is a no-op when nothing changed.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+PATH="$HOME/.local/bin:$PATH" entire enable --agent amp --telemetry=false </dev/null >/dev/null

@@ -14,3 +14,6 @@ todos.json
 
 # Bookserve data (dev default BOOKSERVE_DATA_DIR)
 /data/
+
+# Amp orb portals
+.amp/portals/*
