@@ -10,6 +10,7 @@ import { bookView } from '#/lib/books'
 import type { MatchedMetadata } from '#/lib/books'
 import { config } from '#/lib/config'
 import {
+  DOWNLOAD_TIMEOUT_MS,
   INTEGRATIONS,
   cleanDetails,
   cleanHome,
@@ -18,14 +19,12 @@ import {
   createContext,
   getIntegration,
 } from '#/lib/market/host'
-import { HttpError, downloadCover, request } from '#/lib/metadata/http'
+import { downloadCover } from '#/lib/metadata/http'
 import { UploadError, uploadBook } from '#/lib/scanner'
 import { requireAdmin } from '#/lib/user-functions'
 
 // The Market (admin only): browse the sources set up in Settings through
 // their integrations (src/lib/market), and add books to the library.
-
-const DOWNLOAD_TIMEOUT_MS = 10 * 60_000
 
 const str = (value: unknown, max = 2000) =>
   typeof value === 'string' ? value.trim().slice(0, max) : ''
@@ -285,10 +284,14 @@ export const marketAdd = createServerFn({ method: 'POST' })
     if (existing) return { bookId: existing }
 
     const details = cleanDetails(await integration.book(ctx, data.bookId))
-    const target = await integration.download(ctx, data.bookId, data.formatId)
-    if (!/^https?:\/\//i.test(target.url)) throw new Error('Invalid download')
-    const res = await request(target.url, DOWNLOAD_TIMEOUT_MS, target.headers)
-    if (!res.ok || !res.body) throw new HttpError(res.status)
+    const res = await integration.download(
+      createContext(String(row.id), row.settings, DOWNLOAD_TIMEOUT_MS),
+      data.bookId,
+      data.formatId,
+    )
+    if (!(res instanceof Response) || !res.ok || !res.body) {
+      throw new Error('Download failed')
+    }
 
     let bookId: string
     try {

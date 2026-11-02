@@ -11,7 +11,7 @@ Built-in integrations:
 
 ## Writing an integration
 
-An integration is a `MarketIntegration` object from `src/lib/market/sdk.ts`, the only module it needs from Bookserve (plus, optionally, the OPDS parser in `src/lib/market/opds.ts`).
+An integration is a `MarketIntegration` object from `src/lib/market/sdk.ts`. Import only from that module: it also exports the helpers integrations need (`parseFeed`, `parseOpenSearch`, `fillSearchTemplate` and `resolveUrl` for OPDS feeds, `htmlToText`).
 
 ```ts
 import { defineIntegration } from '#/lib/market/sdk'
@@ -33,7 +33,17 @@ export const example = defineIntegration({
   // The landing page: rows of books, and shelves (categories) to browse.
   async home(ctx) {
     return {
-      rows: [{ id: 'popular', title: 'Popular', description: null, books: [] }],
+      // `kind` ('popular' or 'new') merges the row with other sources' rows
+      // of that kind; rows without one merge by title.
+      rows: [
+        {
+          id: 'popular',
+          kind: 'popular',
+          title: 'Popular',
+          description: null,
+          books: [],
+        },
+      ],
       shelves: [{ id: 'fiction', title: 'Fiction', description: null }],
     }
   },
@@ -66,24 +76,24 @@ export const example = defineIntegration({
     }
   },
 
-  // Where to download a format. Bookserve streams it into the library.
+  // The EPUB file. Bookserve streams the body into the library; ctx.fetch
+  // gets a longer timeout here.
   async download(ctx, bookId, formatId) {
-    return {
-      url: `https://example.com/books/${bookId}.epub`,
+    return ctx.fetch(`https://example.com/books/${bookId}.epub`, {
       headers: auth(ctx),
-    }
+    })
   },
 })
 ```
 
 Then register it in `INTEGRATIONS` in `src/lib/market/host.ts`. It shows up in the "Add source" dialog, with a form built from `settings`.
 
-The Market shows every source at once, merging the same book from different sources into one entry, and home rows or shelves with the same title into one. Books merge on ISBN, or on title (up to any `:`, `;`, `(` or ` - `) plus the first author's surname. Set `isbn` on a `BookSummary` when the catalog has one.
+The Market shows every source at once, merging the same book from different sources into one entry, and home rows or shelves with the same title into one. Books merge on ISBN, or on title (up to any `:`, `;`, `(`, `[`, `-` or `--`) plus the first author's surname, never across languages. Set `isbn` and `language` on a `BookSummary` when the catalog has them.
 
 ## Rules
 
 - **Ids are yours.** Book, shelf, format ids and cursors are opaque strings that Bookserve passes back unchanged. Book ids must be stable: they are stored in `book_sources.external_id` to show "In library" and to avoid adding a book twice. They arrive from the browser, so validate them before building URLs (see `catalogPath` in the Gutenberg integration).
-- **Use `ctx.fetch`**, not `fetch`: it adds a timeout and Bookserve's User-Agent, and throws on network errors and non-2xx responses with a message the UI shows as is. Throw an `Error` with a short message for anything else ("Unknown book").
+- **Use `ctx.fetch`**, not `fetch`: it takes `method`, `headers`, `body` and `timeoutMs`, allows only http(s) URLs, adds a timeout and Bookserve's User-Agent, and throws on network errors and non-2xx responses with a message the UI shows as is. Throw an `Error` with a short message for anything else ("Unknown book").
 - **Use `ctx.cached(key, ttlMs, load)`** for anything `book()` and `download()` refetch. Its cache is per source and in memory.
 - **Return plain data.** Text is plain (no HTML; `htmlToText` from `#/lib/epub` converts). Dates are `YYYY`, `YYYY-MM` or `YYYY-MM-DD`. Cover URLs are http(s). Bookserve trims and drops anything malformed (`src/lib/market/host.ts`), so a buggy integration can't break the page.
 - **EPUB only.** List only EPUB formats; return an empty `formats` list for books without one. The download is checked to be a valid EPUB before it is added.

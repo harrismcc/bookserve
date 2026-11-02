@@ -15,11 +15,17 @@ export class HttpError extends Error {
 export async function request(
   url: string,
   timeoutMs: number,
-  headers?: Record<string, string>,
+  init?: {
+    method?: string
+    headers?: Record<string, string>
+    body?: string | URLSearchParams
+  },
 ) {
   try {
     return await fetch(url, {
-      headers: { ...headers, 'user-agent': USER_AGENT },
+      method: init?.method,
+      body: init?.body,
+      headers: { ...init?.headers, 'user-agent': USER_AGENT },
       signal: AbortSignal.timeout(timeoutMs),
     })
   } catch (err) {

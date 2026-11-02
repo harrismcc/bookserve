@@ -33,6 +33,9 @@ export type OpdsFeed = {
   next: string | null
   // The rel="search" link: an Atom URL template, or an OpenSearch description.
   search: { href: string; openSearch: boolean } | null
+  // The catalog's popular and new feeds (rel="http://opds-spec.org/sort/…").
+  popular: string | null
+  new: string | null
 }
 
 const parser = new XMLParser({
@@ -159,6 +162,10 @@ export function parseFeed(xml: string, url: string): OpdsFeed {
   if (!feed) throw new Error('Not an OPDS catalog')
   const feedLinks = links(feed, url)
   const search = feedLinks.find((l) => l.rel === 'search')
+  const sortLink = (sort: string) =>
+    feedLinks.find(
+      (l) => l.rel === `http://opds-spec.org/sort/${sort}` && isFeed(l.type),
+    )?.href ?? null
   return {
     url,
     title: text(feed.title) || 'Catalog',
@@ -170,6 +177,8 @@ export function parseFeed(xml: string, url: string): OpdsFeed {
     search: search
       ? { href: search.href, openSearch: !isFeed(search.type) }
       : null,
+    popular: sortLink('popular'),
+    new: sortLink('new'),
   }
 }
 

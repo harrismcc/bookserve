@@ -11,9 +11,11 @@ export type BookSummary = {
   title: string
   authors: string[]
   coverUrl: string | null
-  // When known in lists; the Market uses it to merge copies from different
-  // sources (it also merges by title and author).
+  // When known in lists, these help the Market merge copies of a book from
+  // different sources (it also merges by title and author).
   isbn?: string | null
+  // ISO 639 code, e.g. `en`; copies in different languages never merge.
+  language?: string | null
 }
 
 export type Format = {
@@ -28,8 +30,6 @@ export type Format = {
 export type BookDetails = BookSummary & {
   // Plain text; blank lines separate paragraphs.
   description: string | null
-  // ISO 639 code, e.g. `en`.
-  language: string | null
   publisher: string | null
   // `YYYY`, `YYYY-MM` or `YYYY-MM-DD`.
   publishedDate: string | null
@@ -56,9 +56,13 @@ export type Listing = {
   nextCursor: string | null
 }
 
+// What a home row is, so rows from different sources merge even when their
+// titles differ. Rows without a kind merge by title.
+export type RowKind = 'popular' | 'new'
+
 // The landing page: rows of books, plus shelves to browse.
 export type Home = {
-  rows: Array<ShelfLink & { books: BookSummary[] }>
+  rows: Array<ShelfLink & { kind?: RowKind; books: BookSummary[] }>
   shelves: ShelfLink[]
 }
 
@@ -73,14 +77,19 @@ export type SettingField = {
 export type IntegrationContext = {
   // The source's settings, as entered by an admin (keys from `settings`).
   settings: Record<string, string>
-  // fetch with a timeout and Bookserve's User-Agent. Throws on network errors
-  // ("Timed out", "Could not connect") and on non-2xx responses.
-  fetch: (
-    url: string,
-    init?: { headers?: Record<string, string>; timeoutMs?: number },
-  ) => Promise<Response>
+  // fetch for http(s) URLs, with a timeout and Bookserve's User-Agent. Throws
+  // on network errors ("Timed out", "Could not connect") and on non-2xx
+  // responses. The timeout covers reading the body; downloads get a longer one.
+  fetch: (url: string, init?: FetchInit) => Promise<Response>
   // Memoizes `load` under `key` for `ttlMs`, per source. Failures aren't cached.
   cached: <T>(key: string, ttlMs: number, load: () => Promise<T>) => Promise<T>
+}
+
+export type FetchInit = {
+  method?: string
+  headers?: Record<string, string>
+  body?: string | URLSearchParams
+  timeoutMs?: number
 }
 
 export type MarketIntegration = {
@@ -104,13 +113,24 @@ export type MarketIntegration = {
     cursor: string | null,
   ) => Promise<Listing>
   book: (ctx: IntegrationContext, bookId: string) => Promise<BookDetails>
-  // Where to download a format; Bookserve streams it into the library.
+  // The EPUB file, usually `return ctx.fetch(url)`; Bookserve streams the
+  // body into the library.
   download: (
     ctx: IntegrationContext,
     bookId: string,
     formatId: string,
-  ) => Promise<{ url: string; headers?: Record<string, string> }>
+  ) => Promise<Response>
 }
+
+// Helpers for integrations. Import everything from this module only.
+export { htmlToText } from '#/lib/epub'
+export {
+  fillSearchTemplate,
+  parseFeed,
+  parseOpenSearch,
+  resolveUrl,
+} from '#/lib/market/opds'
+export type { OpdsDownload, OpdsEntry, OpdsFeed } from '#/lib/market/opds'
 
 export function defineIntegration(integration: MarketIntegration) {
   return integration

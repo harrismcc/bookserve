@@ -9,6 +9,7 @@ import type {
   IntegrationContext,
   Listing,
   MarketIntegration,
+  RowKind,
   ShelfLink,
 } from '#/lib/market/sdk'
 
@@ -30,6 +31,7 @@ export function getIntegration(id: string) {
 }
 
 const TIMEOUT_MS = 15_000
+export const DOWNLOAD_TIMEOUT_MS = 10 * 60_000
 const MAX_CACHE_ENTRIES = 200
 
 // Per source; module state, so it lasts as long as the process.
@@ -38,9 +40,11 @@ const caches = new Map<
   Map<string, { at: number; value: Promise<unknown> }>
 >()
 
+// `timeoutMs` is the default for ctx.fetch: DOWNLOAD_TIMEOUT_MS for download().
 export function createContext(
   cacheKey: string,
   settings: Record<string, string>,
+  timeoutMs = TIMEOUT_MS,
 ): IntegrationContext {
   let cache = caches.get(cacheKey)
   if (!cache) caches.set(cacheKey, (cache = new Map()))
@@ -48,11 +52,8 @@ export function createContext(
   return {
     settings,
     async fetch(url, init) {
-      const res = await request(
-        url,
-        init?.timeoutMs ?? TIMEOUT_MS,
-        init?.headers,
-      )
+      if (!/^https?:\/\//i.test(url)) throw new Error('Invalid URL')
+      const res = await request(url, init?.timeoutMs ?? timeoutMs, init)
       if (!res.ok) throw new HttpError(res.status)
       return res
     },
@@ -75,6 +76,8 @@ export function createContext(
 export function clearCache(cacheKey: string) {
   caches.delete(cacheKey)
 }
+
+const ROW_KINDS: RowKind[] = ['popular', 'new']
 
 const str = (value: unknown, max = 500) =>
   typeof value === 'string' ? value.trim().slice(0, max) : ''
@@ -104,6 +107,7 @@ function summary(book: BookSummary): BookSummary {
     authors: strs(book.authors),
     coverUrl: httpUrl(book.coverUrl),
     isbn: str(book.isbn, 20).replace(/[^\dX]/gi, '') || null,
+    language: str(book.language, 20) || null,
   }
 }
 
@@ -123,7 +127,11 @@ const shelves = (list: ShelfLink[]) =>
 export function cleanHome(home: Home): Home {
   return {
     rows: (Array.isArray(home.rows) ? home.rows : [])
-      .map((row) => ({ ...shelf(row), books: books(row.books) }))
+      .map((row) => ({
+        ...shelf(row),
+        kind: ROW_KINDS.includes(row.kind!) ? row.kind : undefined,
+        books: books(row.books),
+      }))
       .filter((row) => row.id && row.books.length),
     shelves: shelves(home.shelves),
   }
@@ -143,7 +151,6 @@ export function cleanDetails(book: BookDetails): BookDetails {
   return {
     ...summary(book),
     description: str(book.description, 20_000) || null,
-    language: str(book.language, 20) || null,
     publisher: str(book.publisher) || null,
     publishedDate: /^\d{4}(-\d{2}(-\d{2})?)?$/.test(date) ? date : null,
     subjects: strs(book.subjects),

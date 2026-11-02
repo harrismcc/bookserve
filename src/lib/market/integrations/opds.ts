@@ -1,11 +1,10 @@
-import { defineIntegration } from '#/lib/market/sdk'
-import type { IntegrationContext, Listing } from '#/lib/market/sdk'
 import {
+  defineIntegration,
   fillSearchTemplate,
   parseFeed,
   parseOpenSearch,
-} from '#/lib/market/opds'
-import type { OpdsEntry } from '#/lib/market/opds'
+} from '#/lib/market/sdk'
+import type { IntegrationContext, Listing, OpdsEntry } from '#/lib/market/sdk'
 
 // Any OPDS 1.x catalog (Calibre, COPS, Kavita, Komga, Standard Ebooks...).
 // Shelf ids and cursors are feed URLs; book ids are `<feed URL>#<entry id>`.
@@ -46,6 +45,7 @@ async function listing(ctx: IntegrationContext, url: string): Promise<Listing> {
       authors: e.authors,
       coverUrl: e.coverUrl,
       isbn: e.isbn,
+      language: e.language,
     })),
     nextCursor: f.next,
   }
@@ -77,20 +77,28 @@ export const opds = defineIntegration({
     await feed(ctx, ctx.settings.url)
   },
 
+  // The catalog's popular and new feeds, when it links them, and the books
+  // on its root feed.
   async home(ctx) {
-    const root = await listing(ctx, ctx.settings.url)
+    const root = await feed(ctx, ctx.settings.url)
+    const rows = [
+      { id: root.popular, kind: 'popular' as const, title: 'Popular' },
+      { id: root.new, kind: 'new' as const, title: 'New' },
+      { id: root.url, kind: undefined, title: root.title },
+    ]
+    const loaded = await Promise.all(
+      rows.map(async (row) => {
+        if (!row.id) return []
+        const books = await listing(ctx, row.id).then(
+          (l) => l.books,
+          () => [],
+        )
+        return [{ ...row, id: row.id, description: null, books }]
+      }),
+    )
     return {
-      rows: root.books.length
-        ? [
-            {
-              id: ctx.settings.url,
-              title: root.title,
-              description: null,
-              books: root.books,
-            },
-          ]
-        : [],
-      shelves: root.shelves,
+      rows: loaded.flat(),
+      shelves: (await listing(ctx, root.url)).shelves,
     }
   },
 
@@ -145,6 +153,6 @@ export const opds = defineIntegration({
     if (!e.downloads.some((d) => d.href === formatId)) {
       throw new Error('Unknown format')
     }
-    return { url: formatId, headers: headers(ctx, formatId) }
+    return ctx.fetch(formatId, { headers: headers(ctx, formatId) })
   },
 })

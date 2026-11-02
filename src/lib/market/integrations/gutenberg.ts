@@ -1,12 +1,11 @@
-import { defineIntegration } from '#/lib/market/sdk'
+import { defineIntegration, parseFeed } from '#/lib/market/sdk'
 import type {
   BookSummary,
   IntegrationContext,
   Listing,
+  OpdsEntry,
   ShelfLink,
 } from '#/lib/market/sdk'
-import { parseFeed } from '#/lib/market/opds'
-import type { OpdsEntry } from '#/lib/market/opds'
 
 // Project Gutenberg, through its OPDS catalog, with its quirks smoothed over:
 // lists link to a feed per book, so covers come from Gutenberg's predictable
@@ -19,11 +18,13 @@ const CACHE_MS = 10 * 60_000
 const ROWS = [
   {
     id: 'popular',
+    kind: 'popular' as const,
     title: 'Popular',
     path: '/ebooks/search.opds/?sort_order=downloads',
   },
   {
     id: 'latest',
+    kind: 'new' as const,
     title: 'Latest',
     path: '/ebooks/search.opds/?sort_order=release_date',
   },
@@ -162,6 +163,7 @@ export const gutenberg = defineIntegration({
     const rows = await Promise.all(
       ROWS.map(async (row) => ({
         id: row.id,
+        kind: row.kind,
         title: row.title,
         description: null,
         books: (await listing(ctx, row.path)).books,
@@ -242,6 +244,6 @@ export const gutenberg = defineIntegration({
       e.downloads.some((d) => formatId(id, d.href) === fid),
     )
     if (!known) throw new Error('Unknown format')
-    return { url: `${BASE}/ebooks/${id}.${fid}` }
+    return ctx.fetch(`${BASE}/ebooks/${id}.${fid}`)
   },
 })
