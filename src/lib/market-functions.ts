@@ -161,90 +161,48 @@ export const removeMarketSource = createServerFn({ method: 'POST' })
     clearCache(String(id))
   })
 
-export type MarketView = Awaited<ReturnType<typeof marketBrowse>>
-
-// Every source's home, or a listing: search results (`q`, from every source
-// with search) or a shelf (`shelf`, one id per source, since shelves with the
-// same name are merged). `cursors` fetches the next page of the sources it
-// names. Each source answers on its own: one failing doesn't hide the others.
+// One source's home, a shelf, or search results; the Market calls it once per
+// source and merges the results as they arrive, so a slow or failing source
+// doesn't hold up the others.
 export const marketBrowse = createServerFn({ method: 'GET' })
   .validator(
     (data: {
+      sourceId: number
       q?: string
-      shelf?: Array<{ source: number; id: string }>
-      cursors?: Record<string, string>
+      shelf?: string
+      cursor?: string
     }) => ({
+      sourceId: Number(data.sourceId),
       q: str(data.q, 200) || null,
-      shelf: Array.isArray(data.shelf)
-        ? data.shelf.map((r) => ({ source: Number(r.source), id: str(r.id) }))
-        : null,
-      cursors: Object.fromEntries(
-        Object.entries(data.cursors ?? {}).map(([k, v]) => [Number(k), str(v)]),
-      ) as Record<number, string>,
+      shelf: str(data.shelf) || null,
+      cursor: str(data.cursor) || null,
     }),
   )
   .handler(async ({ data }) => {
     await requireAdmin()
-    const sources = db
-      .select()
-      .from(marketSources)
-      .orderBy(asc(marketSources.id))
-      .all()
-      .filter((row) => INTEGRATIONS[row.integration])
-      .map((row) => ({
-        row,
-        integration: INTEGRATIONS[row.integration],
-        ctx: createContext(String(row.id), row.settings),
-      }))
-    const paging = Object.keys(data.cursors).length > 0
-
-    async function each<S extends (typeof sources)[number], T>(
-      list: S[],
-      load: (source: S) => Promise<T>,
-    ) {
-      return Promise.all(
-        list.map(async (source) => {
-          const base = { source: source.row.id, sourceName: source.row.name }
-          try {
-            return { ...base, value: await load(source), error: null }
-          } catch (err) {
-            return { ...base, value: null, error: message(err) }
-          }
-        }),
-      )
-    }
-
+    const { row, integration, ctx } = loadSource(data.sourceId)
     if (!data.q && !data.shelf) {
-      const results = await each(sources, async (s) =>
-        cleanHome(await s.integration.home(s.ctx)),
-      )
-      const ids = results.flatMap((r) =>
-        (r.value?.rows ?? []).flatMap((row) =>
-          row.books.map((b) => ({ source: r.source, id: b.id })),
-        ),
-      )
-      return { kind: 'home' as const, results, inLibrary: inLibrary(ids) }
+      const home = cleanHome(await integration.home(ctx))
+      const ids = home.rows.flatMap((r) => r.books.map((b) => b.id))
+      return {
+        kind: 'home' as const,
+        home,
+        inLibrary: inLibrary(ids.map((id) => ({ source: row.id, id }))),
+      }
     }
-
-    const targets = sources.flatMap((s) => {
-      const cursor = data.cursors[s.row.id] ?? null
-      if (paging && !cursor) return []
-      if (data.q)
-        return s.integration.search ? [{ ...s, id: data.q, cursor }] : []
-      const ref = data.shelf!.find((r) => r.source === s.row.id)
-      return ref ? [{ ...s, id: ref.id, cursor }] : []
-    })
-    const results = await each(targets, async (t) =>
-      cleanListing(
-        data.q
-          ? await t.integration.search!(t.ctx, t.id, t.cursor)
-          : await t.integration.shelf(t.ctx, t.id, t.cursor),
+    if (data.q && !integration.search) throw new Error('No search')
+    const listing = cleanListing(
+      data.q
+        ? await integration.search!(ctx, data.q, data.cursor)
+        : await integration.shelf(ctx, data.shelf!, data.cursor),
+    )
+    return {
+      kind: 'listing' as const,
+      listing,
+      inLibrary: inLibrary(
+        listing.books.map((b) => ({ source: row.id, id: b.id })),
       ),
-    )
-    const ids = results.flatMap((r) =>
-      (r.value?.books ?? []).map((b) => ({ source: r.source, id: b.id })),
-    )
-    return { kind: 'listing' as const, results, inLibrary: inLibrary(ids) }
+    }
   })
 
 export const marketBook = createServerFn({ method: 'GET' })

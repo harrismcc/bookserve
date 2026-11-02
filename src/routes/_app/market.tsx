@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Link,
   createFileRoute,
   redirect,
   useNavigate,
-  useRouterState,
 } from '@tanstack/react-router'
 import { Check, ChevronRight, Loader2, Plus, Search, Store } from 'lucide-react'
 
@@ -24,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '#/components/ui/select'
-import type { MarketView } from '#/lib/market-functions'
 import {
   listMarketSources,
   marketAdd,
@@ -33,8 +31,7 @@ import {
 } from '#/lib/market-functions'
 import { mergeBooks, mergeHome, mergeShelves } from '#/lib/market/merge'
 import type { MergedBook, MergedShelf, SourceRef } from '#/lib/market/merge'
-import type { BookDetails } from '#/lib/market/sdk'
-import { cn } from '#/lib/utils'
+import type { BookDetails, Home, Listing } from '#/lib/market/sdk'
 
 type MarketSearch = { q?: string; shelf?: SourceRef[] }
 
@@ -48,6 +45,9 @@ function validateShelf(value: unknown) {
   )
   return refs.length ? refs : undefined
 }
+
+type Source = Awaited<ReturnType<typeof listMarketSources>>[number]
+type InLibrary = Record<string, string>
 
 // Browses every source set up in Settings → Market sources at once: their
 // homes, a shelf (`shelf`: one id per source, for shelves merged by name) or
@@ -63,29 +63,146 @@ export const Route = createFileRoute('/_app/market')({
         : undefined,
     shelf: validateShelf(search.shelf),
   }),
-  loaderDeps: ({ search }) => search,
-  loader: async ({ deps }) => {
-    const sources = await listMarketSources()
-    if (!sources.length) return { sources, view: null }
-    const view = await marketBrowse({ data: { q: deps.q, shelf: deps.shelf } })
-    return { sources, view }
-  },
+  loader: () => listMarketSources(),
   component: Market,
 })
 
-type View = MarketView
-type InLibrary = Record<string, string>
+type SourceResult = {
+  source: number
+  sourceName: string
+  loading: boolean
+  error: string | null
+  home: Home | null
+  pages: Listing[]
+  cursor: string | null
+}
+
+const message = (err: unknown) =>
+  err instanceof Error ? err.message : 'Request failed'
+
+// Loads the view from each source on its own and keeps their results (and
+// pages) apart; the views merge them. Which books are in the library is kept
+// for every offer seen, so adding a book shows everywhere it appears.
+function useMarket(sources: Source[], search: MarketSearch) {
+  const [results, setResults] = useState<SourceResult[]>([])
+  const [inLibrary, setInLibrary] = useState<InLibrary>({})
+  const key = JSON.stringify([search.q, search.shelf])
+  // Bumped per search, so answers for an earlier one are dropped.
+  const generation = useRef(0)
+
+  const update = (source: number, change: Partial<SourceResult>) =>
+    setResults((prev) =>
+      prev.map((r) => (r.source === source ? { ...r, ...change } : r)),
+    )
+  const remember = (found: InLibrary) =>
+    setInLibrary((prev) => ({ ...prev, ...found }))
+
+  useEffect(() => {
+    const gen = ++generation.current
+    const current = () => gen === generation.current
+    const targets = sources.flatMap(
+      (s): Array<{ s: Source; shelf?: string }> => {
+        if (search.q) return s.searchable ? [{ s }] : []
+        if (!search.shelf) return [{ s }]
+        const ref = search.shelf.find((r) => r.source === s.id)
+        return ref ? [{ s, shelf: ref.id }] : []
+      },
+    )
+    setResults(
+      targets.map(({ s }) => ({
+        source: s.id,
+        sourceName: s.name,
+        loading: true,
+        error: null,
+        home: null,
+        pages: [],
+        cursor: null,
+      })),
+    )
+    for (const { s, shelf } of targets) {
+      marketBrowse({ data: { sourceId: s.id, q: search.q, shelf } }).then(
+        (view) => {
+          if (!current()) return
+          remember(view.inLibrary)
+          update(
+            s.id,
+            view.kind === 'home'
+              ? { loading: false, home: view.home }
+              : {
+                  loading: false,
+                  pages: [view.listing],
+                  cursor: view.listing.nextCursor,
+                },
+          )
+        },
+        (err) =>
+          current() && update(s.id, { loading: false, error: message(err) }),
+      )
+    }
+    // `key` covers the search; sources only change on reload.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, sources])
+
+  // The next page from every source that has one. A source that fails keeps
+  // its cursor, so "Load more" retries it.
+  function loadMore() {
+    const gen = generation.current
+    for (const r of results.filter((p) => p.cursor && !p.loading)) {
+      update(r.source, { loading: true, error: null })
+      const ref = search.shelf?.find((s) => s.source === r.source)
+      marketBrowse({
+        data: {
+          sourceId: r.source,
+          q: search.q,
+          shelf: ref?.id,
+          cursor: r.cursor!,
+        },
+      }).then(
+        (view) => {
+          if (gen !== generation.current || view.kind !== 'listing') return
+          remember(view.inLibrary)
+          setResults((prev) =>
+            prev.map((p) =>
+              p.source === r.source
+                ? {
+                    ...p,
+                    loading: false,
+                    pages: [...p.pages, view.listing],
+                    cursor: view.listing.nextCursor,
+                  }
+                : p,
+            ),
+          )
+        },
+        (err) =>
+          gen === generation.current &&
+          update(r.source, { loading: false, error: message(err) }),
+      )
+    }
+  }
+
+  return {
+    results,
+    inLibrary,
+    loadMore,
+    markAdded: (offer: SourceRef, bookId: string) =>
+      remember({ [`${offer.source}:${offer.id}`]: bookId }),
+  }
+}
+
+type Market = ReturnType<typeof useMarket>
 
 const libraryId = (book: MergedBook, inLibrary: InLibrary) =>
   book.offers.map((o) => inLibrary[`${o.source}:${o.id}`]).find(Boolean)
 
 function Market() {
-  const { sources, view } = Route.useLoaderData()
+  const sources = Route.useLoaderData()
   const search = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
-  const loading = useRouterState({ select: (s) => s.status === 'pending' })
+  const market = useMarket(sources, search)
+  const loading = market.results.some((r) => r.loading)
 
-  if (!view) {
+  if (!sources.length) {
     return (
       <main className="mx-auto max-w-6xl px-4 py-8">
         <h1 className="text-2xl font-semibold">Market</h1>
@@ -100,8 +217,7 @@ function Market() {
     )
   }
 
-  const multiSource = sources.length > 1
-  const errors = view.results.filter((r) => r.error)
+  const errors = market.results.filter((r) => r.error)
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
@@ -132,53 +248,63 @@ function Market() {
         </form>
       )}
 
-      <div
-        className={cn(
-          'mt-8 grid gap-8 transition-opacity',
-          loading && 'opacity-50',
+      <div className="mt-8 grid gap-8">
+        {errors.length > 0 && (
+          <div className="grid gap-1">
+            {errors.map((r) => (
+              <p key={r.source} className="text-sm text-destructive">
+                Could not load {r.sourceName}: {r.error}
+              </p>
+            ))}
+          </div>
         )}
-      >
-        {errors.map((r) => (
-          <p key={r.source} className="text-sm text-destructive">
-            Could not load {r.sourceName}: {r.error}
-          </p>
-        ))}
-        {view.kind === 'home' ? (
-          <HomeView view={view} multiSource={multiSource} />
+        {search.q || search.shelf ? (
+          <ListingView market={market} multiSource={sources.length > 1} />
         ) : (
-          <ListingView
-            key={JSON.stringify([search.q, search.shelf])}
-            view={view}
-            multiSource={multiSource}
-          />
+          <HomeView market={market} multiSource={sources.length > 1} />
         )}
       </div>
     </main>
   )
 }
 
+function Loading() {
+  return (
+    <div className="flex min-h-48 items-center justify-center text-muted-foreground">
+      <Loader2 className="size-6 animate-spin" />
+    </div>
+  )
+}
+
 function HomeView({
-  view,
+  market,
   multiSource,
 }: {
-  view: Extract<View, { kind: 'home' }>
+  market: Market
   multiSource: boolean
 }) {
+  const { results } = market
   const { rows, shelves } = useMemo(
     () =>
       mergeHome(
-        view.results.flatMap((r) =>
-          r.value
-            ? [{ ...r.value, source: r.source, sourceName: r.sourceName }]
+        results.flatMap((r) =>
+          r.home
+            ? [{ ...r.home, source: r.source, sourceName: r.sourceName }]
             : [],
         ),
       ),
-    [view],
+    [results],
   )
+  if (!rows.length && !shelves.length) {
+    return results.some((r) => r.loading) ? <Loading /> : null
+  }
   return (
     <div className="grid gap-10">
       {rows.map((row) => (
-        <section key={row.title} className="min-w-0">
+        <section
+          key={row.refs.map((r) => `${r.source}:${r.id}`).join(' ')}
+          className="min-w-0"
+        >
           <div className="mb-4 flex items-baseline justify-between gap-3">
             <h2 className="text-xl font-semibold">{row.title}</h2>
             <Link
@@ -198,7 +324,7 @@ function HomeView({
               >
                 <BookCard
                   book={book}
-                  libraryBookId={libraryId(book, view.inLibrary)}
+                  market={market}
                   multiSource={multiSource}
                 />
               </li>
@@ -217,79 +343,39 @@ function HomeView({
 }
 
 function ListingView({
-  view,
+  market,
   multiSource,
 }: {
-  view: Extract<View, { kind: 'listing' }>
+  market: Market
   multiSource: boolean
 }) {
   const search = Route.useSearch()
-  const lists = (results: typeof view.results) =>
-    results.map((r) => ({
-      source: r.source,
-      sourceName: r.sourceName,
-      items: r.value?.books ?? [],
-    }))
-  const cursorsOf = (results: typeof view.results) =>
-    Object.fromEntries(
-      results.flatMap((r) =>
-        r.value?.nextCursor ? [[String(r.source), r.value.nextCursor]] : [],
-      ),
-    ) as Record<string, string>
-
-  const [books, setBooks] = useState(() => mergeBooks([], lists(view.results)))
-  const [inLibrary, setInLibrary] = useState(view.inLibrary)
-  const [cursors, setCursors] = useState(() => cursorsOf(view.results))
-  const [loadingMore, setLoadingMore] = useState(false)
-  const [error, setError] = useState('')
+  const { results } = market
+  // Page by page, so a source's later pages never jump ahead of another's
+  // earlier ones.
+  const books = useMemo(() => {
+    let merged: MergedBook[] = []
+    const pages = Math.max(0, ...results.map((r) => r.pages.length))
+    for (let i = 0; i < pages; i++) {
+      merged = mergeBooks(
+        merged,
+        results.map((r) => ({ ...r, items: r.pages[i]?.books ?? [] })),
+      )
+    }
+    return merged
+  }, [results])
   const shelves = useMemo(
     () =>
       mergeShelves(
-        view.results.map((r) => ({
-          source: r.source,
-          sourceName: r.sourceName,
-          items: r.value?.shelves ?? [],
-        })),
+        results.map((r) => ({ ...r, items: r.pages[0]?.shelves ?? [] })),
       ),
-    [view],
+    [results],
   )
   const title =
-    search.q ?? view.results.find((r) => r.value)?.value?.title ?? 'Market'
-  const hasMore = Object.keys(cursors).length > 0
-
-  async function loadMore() {
-    setLoadingMore(true)
-    setError('')
-    try {
-      const next = await marketBrowse({
-        data: { q: search.q, shelf: search.shelf, cursors },
-      })
-      if (next.kind !== 'listing') return
-      setBooks((prev) => mergeBooks(prev, lists(next.results)))
-      setInLibrary((prev) => ({ ...prev, ...next.inLibrary }))
-      // A source that fails keeps its cursor, so "Load more" retries it.
-      setCursors({
-        ...Object.fromEntries(
-          next.results.flatMap((r) =>
-            r.error ? [[String(r.source), cursors[r.source]]] : [],
-          ),
-        ),
-        ...cursorsOf(next.results),
-      })
-      const failed = next.results.filter((r) => r.error)
-      if (failed.length) {
-        setError(
-          failed
-            .map((r) => `Could not load ${r.sourceName}: ${r.error}`)
-            .join('\n'),
-        )
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load more')
-    } finally {
-      setLoadingMore(false)
-    }
-  }
+    search.q ?? results.find((r) => r.pages[0])?.pages[0].title ?? 'Market'
+  const loading = results.some((r) => r.loading)
+  const hasMore = results.some((r) => r.cursor)
+  const empty = !books.length && !shelves.length
 
   return (
     <div className="grid gap-8">
@@ -303,7 +389,8 @@ function ListingView({
 
       {shelves.length > 0 && <ShelfGrid shelves={shelves} />}
 
-      {books.length === 0 && shelves.length === 0 && (
+      {empty && loading && <Loading />}
+      {empty && !loading && (
         <div className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-lg border border-dashed text-muted-foreground">
           <Search className="size-8" />
           <p className="text-sm">Nothing found</p>
@@ -314,29 +401,22 @@ function ListingView({
         <ul className="grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {books.map((book) => (
             <li key={`${book.offers[0].source}:${book.offers[0].id}`}>
-              <BookCard
-                book={book}
-                libraryBookId={libraryId(book, inLibrary)}
-                multiSource={multiSource}
-              />
+              <BookCard book={book} market={market} multiSource={multiSource} />
             </li>
           ))}
         </ul>
       )}
 
-      {(hasMore || error) && (
-        <div className="flex flex-col items-center gap-2">
-          {error && (
-            <p className="text-sm whitespace-pre-line text-destructive">
-              {error}
-            </p>
-          )}
-          {hasMore && (
-            <Button variant="outline" onClick={loadMore} disabled={loadingMore}>
-              {loadingMore && <Loader2 className="animate-spin" />}
-              {loadingMore ? 'Loading…' : 'Load more'}
-            </Button>
-          )}
+      {hasMore && !empty && (
+        <div className="flex justify-center">
+          <Button
+            variant="outline"
+            onClick={market.loadMore}
+            disabled={loading}
+          >
+            {loading && <Loader2 className="animate-spin" />}
+            {loading ? 'Loading…' : 'Load more'}
+          </Button>
         </div>
       )}
     </div>
@@ -382,53 +462,52 @@ function formatSize(bytes: number | null) {
 }
 
 // A book: the cover and title open its details; the button adds the best
-// format from the first source that has it (the dialog lets you pick).
+// format from the first source that has one (the dialog lets you pick).
 function BookCard({
   book,
-  libraryBookId,
+  market,
   multiSource,
 }: {
   book: MergedBook
-  libraryBookId: string | undefined
+  market: Market
   multiSource: boolean
 }) {
   const [open, setOpen] = useState(false)
-  const [state, setState] = useState<AddState>(
-    libraryBookId
-      ? { status: 'added', bookId: libraryBookId }
-      : { status: 'idle' },
-  )
+  const [local, setLocal] = useState<AddState>({ status: 'idle' })
+  const libraryBookId = libraryId(book, market.inLibrary)
+  const state: AddState = libraryBookId
+    ? { status: 'added', bookId: libraryBookId }
+    : local
 
-  async function add(offer?: { source: number; id: string; formatId: string }) {
-    setState({ status: 'adding' })
-    try {
-      if (!offer) {
-        for (const o of book.offers) {
-          const { book: details } = await marketBook({
-            data: { sourceId: o.source, bookId: o.id },
-          }).catch(() => ({ book: null }))
-          const formatId = details?.formats[0]?.id
-          if (formatId) {
-            offer = { source: o.source, id: o.id, formatId }
-            break
-          }
-        }
-        if (!offer) throw new Error('No EPUB available')
+  async function addOffer(offer: SourceRef, formatId: string) {
+    const { bookId } = await marketAdd({
+      data: { sourceId: offer.source, bookId: offer.id, formatId },
+    })
+    market.markAdded(offer, bookId)
+  }
+
+  // Tries each source in turn until one has an EPUB that downloads.
+  async function add(choice?: SourceRef & { formatId: string }) {
+    setLocal({ status: 'adding' })
+    let error = 'No EPUB available'
+    for (const offer of choice ? [choice] : book.offers) {
+      try {
+        const formatId =
+          choice?.formatId ??
+          (
+            await marketBook({
+              data: { sourceId: offer.source, bookId: offer.id },
+            })
+          ).book.formats[0]?.id
+        if (!formatId) continue
+        await addOffer(offer, formatId)
+        setLocal({ status: 'idle' })
+        return
+      } catch (err) {
+        error = message(err)
       }
-      const { bookId } = await marketAdd({
-        data: {
-          sourceId: offer.source,
-          bookId: offer.id,
-          formatId: offer.formatId,
-        },
-      })
-      setState({ status: 'added', bookId })
-    } catch (err) {
-      setState({
-        status: 'error',
-        message: err instanceof Error ? err.message : 'Download failed',
-      })
     }
+    setLocal({ status: 'error', message: error })
   }
 
   return (
@@ -468,7 +547,7 @@ function BookCard({
           multiSource={multiSource}
           onClose={() => setOpen(false)}
           state={state}
-          onAdded={(bookId) => setState({ status: 'added', bookId })}
+          onInLibrary={market.markAdded}
           onAdd={add}
         />
       )}
@@ -529,18 +608,20 @@ function BookDialog({
   multiSource,
   onClose,
   state,
-  onAdded,
+  onInLibrary,
   onAdd,
 }: {
   book: MergedBook
   multiSource: boolean
   onClose: () => void
   state: AddState
-  onAdded: (bookId: string) => void
-  onAdd: (offer: { source: number; id: string; formatId: string }) => void
+  onInLibrary: (offer: SourceRef, bookId: string) => void
+  onAdd: (offer: SourceRef & { formatId: string }) => void
 }) {
   const [offers, setOffers] = useState<OfferDetails[] | null>(null)
   const [choice, setChoice] = useState<string>()
+  // Reload only when the offers change, not on every merge of the list.
+  const offersKey = book.offers.map((o) => `${o.source}:${o.id}`).join(' ')
 
   useEffect(() => {
     let current = true
@@ -550,28 +631,33 @@ function BookDialog({
           const result = await marketBook({
             data: { sourceId: offer.source, bookId: offer.id },
           })
-          if (result.libraryBookId && current) onAdded(result.libraryBookId)
+          if (result.libraryBookId && current) {
+            onInLibrary(offer, result.libraryBookId)
+          }
           return { ...offer, book: result.book, error: null }
         } catch (err) {
-          return {
-            ...offer,
-            book: null,
-            error: err instanceof Error ? err.message : 'Request failed',
-          }
+          return { ...offer, book: null, error: message(err) }
         }
       }),
     ).then((loaded) => {
       if (!current) return
       setOffers(loaded)
       const first = loaded.find((o) => o.book?.formats.length)
-      if (first) setChoice(`${first.source}|${first.book!.formats[0].id}`)
+      // Keep the user's choice when the offers change, if it still exists.
+      setChoice((prev) =>
+        loaded.some((o) =>
+          o.book?.formats.some((f) => `${o.source}|${f.id}` === prev),
+        )
+          ? prev
+          : first && `${first.source}|${first.book!.formats[0].id}`,
+      )
     })
     return () => {
       current = false
     }
-    // Loads once per open; onAdded is a fresh closure each render.
+    // onInLibrary is a fresh closure each render.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
-  }, [book])
+  }, [offersKey])
 
   const details = offers?.find((o) => o.book)?.book
   const shown = details ?? book

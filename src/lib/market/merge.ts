@@ -1,4 +1,4 @@
-import type { BookSummary, ShelfLink } from '#/lib/market/sdk'
+import type { BookSummary, Home, RowKind, ShelfLink } from '#/lib/market/sdk'
 
 // Merges results from several sources into one list, deduplicating books
 // that are the same work. Client-safe, so "Load more" merges the same way.
@@ -22,36 +22,40 @@ export type SourceResults<T> = {
   items: T[]
 }
 
-const fold = (text: string) =>
+// Lowercase, without accents or punctuation: "Science Fiction & Fantasy" and
+// "science fiction and fantasy" are the same name.
+const norm = (text: string) =>
   text
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
-
-// "The Adventures of Sherlock Holmes: Illustrated" → "adventures of sherlock holmes"
-function workTitle(title: string) {
-  return fold(title)
-    .split(/\s*[:;([]\s*|\s+-{1,2}\s+/)[0]
     .replace(/&/g, ' and ')
-    .replace(/^(the|a|an)\s+/, '')
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim()
-}
 
-// "Jane Austen" → "austen"; "Austen, Jane" → "austen".
+// "The Adventures of Sherlock Holmes: Illustrated" → "adventures of sherlock holmes"
+const workTitle = (title: string) =>
+  norm(title.split(/\s*[:;([]\s*|\s+-{1,2}\s+/)[0]).replace(/^(the|a|an) /, '')
+
+// "Jane Austen", "Austen, Jane", "Jane Austen (1775-1817)" → "austen";
+// "Le Guin, Ursula K." and "Ursula K. Le Guin" → "guin".
 function surname(author: string) {
-  const name = fold(author)
-  const last = name.includes(',')
-    ? name.split(',')[0]
-    : name.split(/\s+/).at(-1)
-  return (last ?? '').replace(/[^\p{L}\p{N}]+/gu, '')
+  const name = author
+    .replace(/\([^)]*\)/g, '')
+    .replace(/,?\s*\b(jr|sr|ii|iii|iv)\b\.?\s*$/i, '')
+  const comma = name.indexOf(',')
+  const inverted = comma > 0 && /\p{L}/u.test(name.slice(comma + 1))
+  const words = norm(inverted ? name.slice(0, comma) : name.replace(/,.*/, ''))
+    .split(' ')
+    .filter((w) => !/^\d+$/.test(w))
+  return words.at(-1) ?? ''
 }
 
 function isbn13(isbn: string | null | undefined) {
-  const digits = (isbn ?? '').replace(/[^\dX]/gi, '').toUpperCase()
-  if (digits.length === 13) return digits
-  if (digits.length !== 10) return null
-  const core = `978${digits.slice(0, 9)}`
+  const value = (isbn ?? '').replace(/[\s-]/g, '').toUpperCase()
+  if (/^\d{13}$/.test(value)) return value
+  if (!/^\d{9}[\dX]$/.test(value)) return null
+  const core = `978${value.slice(0, 9)}`
   const sum = [...core].reduce(
     (total, d, i) => total + Number(d) * (i % 2 ? 3 : 1),
     0,
@@ -59,8 +63,13 @@ function isbn13(isbn: string | null | undefined) {
   return core + ((10 - (sum % 10)) % 10)
 }
 
-// The keys under which two books count as the same work. Books without an
-// author only match by ISBN: "Poems" by two people isn't one book.
+// "en-US" → "en".
+const lang = (language: string | null | undefined) =>
+  language?.toLowerCase().split(/[-_]/)[0] || null
+
+// The keys under which two books count as the same work, most exact first.
+// Books without an author only match by ISBN: "Poems" by two people isn't one
+// book.
 export function bookKeys(
   book: Pick<BookSummary, 'title' | 'authors' | 'isbn'>,
 ) {
@@ -94,7 +103,20 @@ export function mergeBooks(
 ) {
   const merged = existing.map((b) => ({ ...b, offers: [...b.offers] }))
   const keys = merged.map((b) => new Set(bookKeys(b)))
-  for (const { list, item } of interleave(lists)) {
+  // Each new book's rank: the position of its best-ranked copy.
+  const rank = new Map<MergedBook, number>()
+  const items = interleave(lists).map((entry, position) => ({
+    ...entry,
+    position,
+    keys: bookKeys(entry.item),
+  }))
+  // Books with an ISBN first, so an exact ISBN match is found before a later
+  // book's title and author claim the copy.
+  const ordered = [
+    ...items.filter((i) => i.keys[0]?.startsWith('isbn:')),
+    ...items.filter((i) => !i.keys[0]?.startsWith('isbn:')),
+  ]
+  for (const { list, item, position, keys: itemKeys } of ordered) {
     if (
       merged.some((b) =>
         b.offers.some((o) => o.source === list.source && o.id === item.id),
@@ -107,44 +129,70 @@ export function mergeBooks(
       sourceName: list.sourceName,
       id: item.id,
     }
-    const itemKeys = bookKeys(item)
-    const index = merged.findIndex(
-      (b, i) =>
-        !b.offers.some((o) => o.source === list.source) &&
-        itemKeys.some((k) => keys[i].has(k)),
-    )
+    const candidate = (b: MergedBook) =>
+      !b.offers.some((o) => o.source === list.source) &&
+      !(
+        lang(b.language) &&
+        lang(item.language) &&
+        lang(b.language) !== lang(item.language)
+      )
+    let index = -1
+    for (const key of itemKeys) {
+      index = merged.findIndex((b, i) => candidate(b) && keys[i].has(key))
+      if (index >= 0) break
+    }
     if (index < 0) {
-      merged.push({
+      const book = {
         title: item.title,
         authors: item.authors,
         coverUrl: item.coverUrl,
         isbn: item.isbn ?? null,
+        language: item.language ?? null,
         offers: [offer],
-      })
+      }
+      merged.push(book)
       keys.push(new Set(itemKeys))
+      rank.set(book, position)
       continue
     }
     const book = merged[index]
     book.offers.push(offer)
     book.coverUrl ??= item.coverUrl
     book.isbn ??= item.isbn ?? null
+    book.language ??= item.language ?? null
     for (const key of itemKeys) keys[index].add(key)
+    if (rank.has(book)) rank.set(book, Math.min(rank.get(book)!, position))
   }
-  return merged
+  // Offers in rank order too (copies from earlier pages first).
+  const at = new Map(
+    items.map((i) => [`${i.list.source}:${i.item.id}`, i.position]),
+  )
+  for (const book of merged) {
+    book.offers.sort(
+      (a, b) =>
+        (at.get(`${a.source}:${a.id}`) ?? -1) -
+        (at.get(`${b.source}:${b.id}`) ?? -1),
+    )
+  }
+  // Earlier pages stay put; new books follow in rank order.
+  return [
+    ...merged.slice(0, existing.length),
+    ...merged
+      .slice(existing.length)
+      .sort((a, b) => rank.get(a)! - rank.get(b)!),
+  ]
 }
 
-// Merges shelves (and home rows) with the same name across sources.
-export function mergeShelves(lists: Array<SourceResults<ShelfLink>>) {
-  const merged: MergedShelf[] = []
+// Merges shelves (and home rows) with the same name, or the same kind,
+// across sources.
+export function mergeShelves(
+  lists: Array<SourceResults<ShelfLink & { kind?: RowKind }>>,
+) {
+  const merged: Array<MergedShelf & { key: string }> = []
   for (const { list, item } of interleave(lists)) {
-    const name = fold(item.title)
-      .replace(/[^\p{L}\p{N}]+/gu, ' ')
-      .trim()
+    const key = item.kind ?? norm(item.title)
     const shelf = merged.find(
-      (s) =>
-        fold(s.title)
-          .replace(/[^\p{L}\p{N}]+/gu, ' ')
-          .trim() === name && !s.refs.some((r) => r.source === list.source),
+      (s) => s.key === key && !s.refs.some((r) => r.source === list.source),
     )
     const ref = { source: list.source, id: item.id }
     if (shelf) {
@@ -152,13 +200,14 @@ export function mergeShelves(lists: Array<SourceResults<ShelfLink>>) {
       shelf.description ??= item.description
     } else {
       merged.push({
+        key,
         title: item.title,
         description: item.description,
         refs: [ref],
       })
     }
   }
-  return merged
+  return merged.map(({ key: _, ...shelf }) => shelf)
 }
 
 // One home from every source's: rows with the same name merge, as do
@@ -168,7 +217,7 @@ export function mergeHome(
   homes: Array<{
     source: number
     sourceName: string
-    rows: Array<ShelfLink & { books: BookSummary[] }>
+    rows: Home['rows']
     shelves: ShelfLink[]
   }>,
 ) {
