@@ -1,0 +1,5 @@
+“Search project Gutenberg” makes it seem like it’s only Gutenberg? What about other future plugins?
+
+---
+
+Oh no we want to be able to search and browse across all markets, deduping where possible. You can commit and push this, like, checkpoint of what you have now, though, and then start working on adding multiple integration, like, support in the market as a, like, follow-up. Because it's sort of a big enough task, especially with figuring out how to deduplicate best.
