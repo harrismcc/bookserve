@@ -28,7 +28,7 @@ Open http://localhost:3000 and create the admin account. On first boot the conta
 
 Create a key for each device under your user menu → **API keys**, and sign in with your Bookserve username and that key as the password. Deleting the key signs the device out.
 
-- **OPDS:** the library is an OPDS 1.2 catalog at `http://<server>:3000/opds`. Add that URL to any OPDS reader (KOReader, Thorium, Moon+ Reader, Calibre…). It lists recently added books and all books by title, supports search, and downloads EPUBs. Your account password also works here. Admins can turn it off under Settings → OPDS server.
+- **OPDS:** the library is an OPDS 1.2 catalog at `http://<server>:3000/opds`. Add that URL to any OPDS reader (KOReader, Thorium, Moon+ Reader, Calibre…). It lists recently added books and all books by title, supports search, and downloads EPUBs. Admins can turn it off under Settings → OPDS server.
 - **Reading progress:** in KOReader, open a book, then Tools → Progress sync → Custom sync server: `http://<server>:3000/kosync`, and Login with your username and key. Positions sync between devices, and the book's page in Bookserve shows how far you are. Keep KOReader's document matching on "Binary" (the default) so Bookserve can tell which book it is.
 
 ## Development

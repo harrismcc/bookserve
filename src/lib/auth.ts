@@ -7,7 +7,7 @@ import { tanstackStartCookies } from 'better-auth/tanstack-start'
 import { and, eq } from 'drizzle-orm'
 
 import { db } from '#/db'
-import { account, apiKeys, user } from '#/db/schema'
+import { apiKeys, user } from '#/db/schema'
 import { config } from '#/lib/config'
 
 // BETTER_AUTH_SECRET wins; otherwise generate one on first boot and keep it in the data dir.
@@ -51,15 +51,13 @@ export const auth = betterAuth({
   plugins: [username(), admin(), tanstackStartCookies()],
 })
 
-const sha256 = (value: string) =>
-  crypto.createHash('sha256').update(value).digest('hex')
-
 export const md5 = (value: string) =>
   crypto.createHash('md5').update(value).digest('hex')
 
 // API keys are stored as sha256(md5(key)): KOSync clients send md5(key), and
 // a key used as a Basic password is md5'd first to get the same value.
-export const apiKeyHash = (md5Key: string) => sha256(md5Key)
+export const apiKeyHash = (md5Key: string) =>
+  crypto.createHash('sha256').update(md5Key).digest('hex')
 
 const isBanned = (u: typeof user.$inferSelect) =>
   Boolean(u.banned && (!u.banExpires || u.banExpires > new Date()))
@@ -81,32 +79,8 @@ export function apiKeyUser(name: string, md5Key: string) {
   return row && !isBanned(row.user) ? row.user : null
 }
 
-// Per username: the password (as sha256) last verified and the account's
-// password hash it matched. Hashing is slow on a Pi and OPDS readers send
-// Basic credentials with every feed page and cover, so a password is checked
-// once per password hash; a password change forces a new check.
-const verifiedBasic = new Map<string, { password: string; hash: string }>()
-
-// Per username: unsuccessful Basic attempts in the current window. Better Auth's
-// sign-in rate limit doesn't cover this path, so guessing is throttled here.
-// A reader whose password is already verified isn't locked out by it.
-const basicAttempts = new Map<string, { count: number; until: number }>()
-const MAX_ATTEMPTS = 5
-const ATTEMPT_WINDOW_MS = 60_000
-
-function recordAttempt(name: string) {
-  const now = Date.now()
-  for (const [key, entry] of basicAttempts) {
-    if (entry.until <= now) basicAttempts.delete(key)
-  }
-  const entry = basicAttempts.get(name)
-  if (entry) entry.count++
-  else basicAttempts.set(name, { count: 1, until: now + ATTEMPT_WINDOW_MS })
-}
-
 // The signed-in user for a request: a session cookie, or HTTP Basic
-// credentials (username and an API key or the password) from clients such as
-// OPDS readers.
+// credentials (username and an API key) from clients such as OPDS readers.
 export async function requestUser(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers })
   if (session) return session.user
@@ -117,50 +91,7 @@ export async function requestUser(request: Request) {
   const decoded = Buffer.from(match[1], 'base64').toString('utf8')
   const sep = decoded.indexOf(':')
   if (sep < 0) return null
-  const name = decoded.slice(0, sep).toLowerCase()
-  const password = decoded.slice(sep + 1)
-  const keyUser = apiKeyUser(name, md5(password))
-  if (keyUser) return keyUser
-  const row = db
-    .select({ user, hash: account.password })
-    .from(user)
-    .innerJoin(
-      account,
-      and(eq(account.userId, user.id), eq(account.providerId, 'credential')),
-    )
-    .where(eq(user.username, name))
-    .get()
-  if (row && isBanned(row.user)) return null
-
-  const cached = verifiedBasic.get(name)
-  if (
-    row?.hash &&
-    cached?.hash === row.hash &&
-    cached.password === sha256(password)
-  ) {
-    return row.user
-  }
-  const attempts = basicAttempts.get(name)
-  if (
-    attempts &&
-    attempts.count >= MAX_ATTEMPTS &&
-    attempts.until > Date.now()
-  ) {
-    return null
-  }
-  // Count the attempt before hashing, so parallel guesses can't all slip in
-  // under the limit; a correct password clears the count.
-  recordAttempt(name)
-  const ctx = await auth.$context
-  if (!row?.hash) {
-    // Hash anyway, so the response time doesn't reveal which usernames exist.
-    await ctx.password.hash(password)
-    return null
-  }
-  if (!(await ctx.password.verify({ hash: row.hash, password }))) return null
-  basicAttempts.delete(name)
-  verifiedBasic.set(name, { password: sha256(password), hash: row.hash })
-  return row.user
+  return apiKeyUser(decoded.slice(0, sep), md5(decoded.slice(sep + 1)))
 }
 
 // Asks clients without a session (e.g. OPDS readers) for Basic credentials.
