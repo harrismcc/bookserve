@@ -13,6 +13,7 @@ export const Route = createFileRoute('/_app/settings')({
 const sections = [
   { to: '/settings/users', label: 'Users' },
   { to: '/settings/market', label: 'Market sources' },
+  { to: '/settings/opds', label: 'OPDS server' },
 ] as const
 
 function Settings() {

@@ -212,3 +212,10 @@ export const bookSources = sqliteTable(
     ),
   ],
 )
+
+// App-wide settings changed in Settings, as key → JSON value. A missing key
+// means the default in src/lib/settings.ts.
+export const settings = sqliteTable('settings', {
+  key: text('key').primaryKey(),
+  value: text('value', { mode: 'json' }).notNull(),
+})

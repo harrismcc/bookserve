@@ -3,9 +3,8 @@ import { desc, eq } from 'drizzle-orm'
 
 import { db } from '#/db'
 import { books } from '#/db/schema'
-import { requestUser, unauthorized } from '#/lib/auth'
 import { bookView } from '#/lib/books'
-import { ACQUISITION, bookEntry, feed } from '#/lib/opds-feed'
+import { ACQUISITION, bookEntry, feed, deniedResponse } from '#/lib/opds-feed'
 
 const PAGE_SIZE = 50
 const collator = new Intl.Collator()
@@ -16,7 +15,8 @@ export const Route = createFileRoute('/opds/books')({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        if (!(await requestUser(request))) return unauthorized()
+        const denied = await deniedResponse(request)
+        if (denied) return denied
         const params = new URL(request.url).searchParams
         const recent = params.get('sort') === 'new'
         const query = params.get('q')?.trim() ?? ''

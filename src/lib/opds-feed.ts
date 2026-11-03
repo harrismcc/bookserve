@@ -1,7 +1,9 @@
 import path from 'node:path'
 
+import { requestUser, unauthorized } from '#/lib/auth'
 import type { bookView } from '#/lib/books'
 import { config } from '#/lib/config'
+import { getSetting } from '#/lib/settings'
 
 // Builds the OPDS 1.2 catalog (Atom feeds) that serves the library to reading
 // apps. Routes live under src/routes/opds; files come from /api/books/$id/*.
@@ -38,6 +40,16 @@ type Link = { rel: string; href: string; type: string; title?: string }
 
 const link = ({ rel, href, type, title }: Link) =>
   `<link rel="${xml(rel)}" href="${xml(href)}" type="${xml(type)}"${title ? ` title="${xml(title)}"` : ''}/>`
+
+// The response for a catalog request that may not proceed: not found while
+// the OPDS server is turned off in Settings, or a Basic credentials challenge.
+export async function deniedResponse(request: Request) {
+  if (!getSetting('opdsEnabled')) {
+    return new Response('Not Found', { status: 404 })
+  }
+  if (!(await requestUser(request))) return unauthorized()
+  return null
+}
 
 // The public origin, for the absolute URLs OpenSearch templates need.
 export function publicOrigin(request: Request) {

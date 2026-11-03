@@ -21,6 +21,7 @@ import { Route as OpdsSearchRouteImport } from './routes/opds/search'
 import { Route as AppBooksBookIdRouteImport } from './routes/_app/books/$bookId'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppSettingsMarketRouteImport } from './routes/_app/settings/market'
+import { Route as AppSettingsOpdsRouteImport } from './routes/_app/settings/opds'
 import { Route as AppSettingsUsersRouteImport } from './routes/_app/settings/users'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiBooksUploadRouteImport } from './routes/api/books/upload'
@@ -86,6 +87,11 @@ const AppSettingsMarketRoute = AppSettingsMarketRouteImport.update({
   path: '/market',
   getParentRoute: () => AppSettingsRouteRoute,
 } as any)
+const AppSettingsOpdsRoute = AppSettingsOpdsRouteImport.update({
+  id: '/opds',
+  path: '/opds',
+  getParentRoute: () => AppSettingsRouteRoute,
+} as any)
 const AppSettingsUsersRoute = AppSettingsUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/opds/': typeof OpdsIndexRoute
   '/books/$bookId': typeof AppBooksBookIdRoute
   '/settings/market': typeof AppSettingsMarketRoute
+  '/settings/opds': typeof AppSettingsOpdsRoute
   '/settings/users': typeof AppSettingsUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/books/upload': typeof ApiBooksUploadRoute
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/opds': typeof OpdsIndexRoute
   '/books/$bookId': typeof AppBooksBookIdRoute
   '/settings/market': typeof AppSettingsMarketRoute
+  '/settings/opds': typeof AppSettingsOpdsRoute
   '/settings/users': typeof AppSettingsUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/books/upload': typeof ApiBooksUploadRoute
@@ -160,6 +168,7 @@ export interface FileRoutesById {
   '/opds/': typeof OpdsIndexRoute
   '/_app/books/$bookId': typeof AppBooksBookIdRoute
   '/_app/settings/market': typeof AppSettingsMarketRoute
+  '/_app/settings/opds': typeof AppSettingsOpdsRoute
   '/_app/settings/users': typeof AppSettingsUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/books/upload': typeof ApiBooksUploadRoute
@@ -180,6 +189,7 @@ export interface FileRouteTypes {
     | '/opds/'
     | '/books/$bookId'
     | '/settings/market'
+    | '/settings/opds'
     | '/settings/users'
     | '/api/auth/$'
     | '/api/books/upload'
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/opds'
     | '/books/$bookId'
     | '/settings/market'
+    | '/settings/opds'
     | '/settings/users'
     | '/api/auth/$'
     | '/api/books/upload'
@@ -216,6 +227,7 @@ export interface FileRouteTypes {
     | '/opds/'
     | '/_app/books/$bookId'
     | '/_app/settings/market'
+    | '/_app/settings/opds'
     | '/_app/settings/users'
     | '/api/auth/$'
     | '/api/books/upload'
@@ -323,6 +335,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsMarketRouteImport
       parentRoute: typeof AppSettingsRouteRoute
     }
+    '/_app/settings/opds': {
+      id: '/_app/settings/opds'
+      path: '/opds'
+      fullPath: '/settings/opds'
+      preLoaderRoute: typeof AppSettingsOpdsRouteImport
+      parentRoute: typeof AppSettingsRouteRoute
+    }
     '/_app/settings/users': {
       id: '/_app/settings/users'
       path: '/users'
@@ -363,12 +382,14 @@ declare module '@tanstack/react-router' {
 
 interface AppSettingsRouteRouteChildren {
   AppSettingsMarketRoute: typeof AppSettingsMarketRoute
+  AppSettingsOpdsRoute: typeof AppSettingsOpdsRoute
   AppSettingsUsersRoute: typeof AppSettingsUsersRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
 }
 
 const AppSettingsRouteRouteChildren: AppSettingsRouteRouteChildren = {
   AppSettingsMarketRoute: AppSettingsMarketRoute,
+  AppSettingsOpdsRoute: AppSettingsOpdsRoute,
   AppSettingsUsersRoute: AppSettingsUsersRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,
 }

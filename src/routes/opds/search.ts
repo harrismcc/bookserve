@@ -1,14 +1,20 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { requestUser, unauthorized } from '#/lib/auth'
-import { ACQUISITION, OPENSEARCH, publicOrigin, xml } from '#/lib/opds-feed'
+import {
+  ACQUISITION,
+  OPENSEARCH,
+  publicOrigin,
+  xml,
+  deniedResponse,
+} from '#/lib/opds-feed'
 
 // OpenSearch description for the catalog's rel="search" link.
 export const Route = createFileRoute('/opds/search')({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        if (!(await requestUser(request))) return unauthorized()
+        const denied = await deniedResponse(request)
+        if (denied) return denied
         const template = `${publicOrigin(request)}/opds/books?q={searchTerms}`
         return new Response(
           `<?xml version="1.0" encoding="UTF-8"?>
