@@ -9,6 +9,7 @@ export const Route = createFileRoute('/_app/settings')({
 // server function re-checks the session with requireAdmin().
 const sections = [
   { to: '/settings/api-keys', label: 'API keys' },
+  { to: '/settings/sync', label: 'KOReader sync' },
   { to: '/settings/users', label: 'Users', admin: true },
   { to: '/settings/market', label: 'Market sources', admin: true },
   { to: '/settings/opds', label: 'OPDS server', admin: true },

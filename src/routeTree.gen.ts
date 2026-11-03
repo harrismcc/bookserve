@@ -24,6 +24,7 @@ import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/ind
 import { Route as AppSettingsApiKeysRouteImport } from './routes/_app/settings/api-keys'
 import { Route as AppSettingsMarketRouteImport } from './routes/_app/settings/market'
 import { Route as AppSettingsOpdsRouteImport } from './routes/_app/settings/opds'
+import { Route as AppSettingsSyncRouteImport } from './routes/_app/settings/sync'
 import { Route as AppSettingsUsersRouteImport } from './routes/_app/settings/users'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiBooksUploadRouteImport } from './routes/api/books/upload'
@@ -104,6 +105,11 @@ const AppSettingsOpdsRoute = AppSettingsOpdsRouteImport.update({
   path: '/opds',
   getParentRoute: () => AppSettingsRouteRoute,
 } as any)
+const AppSettingsSyncRoute = AppSettingsSyncRouteImport.update({
+  id: '/sync',
+  path: '/sync',
+  getParentRoute: () => AppSettingsRouteRoute,
+} as any)
 const AppSettingsUsersRoute = AppSettingsUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/settings/api-keys': typeof AppSettingsApiKeysRoute
   '/settings/market': typeof AppSettingsMarketRoute
   '/settings/opds': typeof AppSettingsOpdsRoute
+  '/settings/sync': typeof AppSettingsSyncRoute
   '/settings/users': typeof AppSettingsUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/books/upload': typeof ApiBooksUploadRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/settings/api-keys': typeof AppSettingsApiKeysRoute
   '/settings/market': typeof AppSettingsMarketRoute
   '/settings/opds': typeof AppSettingsOpdsRoute
+  '/settings/sync': typeof AppSettingsSyncRoute
   '/settings/users': typeof AppSettingsUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/books/upload': typeof ApiBooksUploadRoute
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/_app/settings/api-keys': typeof AppSettingsApiKeysRoute
   '/_app/settings/market': typeof AppSettingsMarketRoute
   '/_app/settings/opds': typeof AppSettingsOpdsRoute
+  '/_app/settings/sync': typeof AppSettingsSyncRoute
   '/_app/settings/users': typeof AppSettingsUsersRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/books/upload': typeof ApiBooksUploadRoute
@@ -210,6 +219,7 @@ export interface FileRouteTypes {
     | '/settings/api-keys'
     | '/settings/market'
     | '/settings/opds'
+    | '/settings/sync'
     | '/settings/users'
     | '/api/auth/$'
     | '/api/books/upload'
@@ -230,6 +240,7 @@ export interface FileRouteTypes {
     | '/settings/api-keys'
     | '/settings/market'
     | '/settings/opds'
+    | '/settings/sync'
     | '/settings/users'
     | '/api/auth/$'
     | '/api/books/upload'
@@ -252,6 +263,7 @@ export interface FileRouteTypes {
     | '/_app/settings/api-keys'
     | '/_app/settings/market'
     | '/_app/settings/opds'
+    | '/_app/settings/sync'
     | '/_app/settings/users'
     | '/api/auth/$'
     | '/api/books/upload'
@@ -381,6 +393,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsOpdsRouteImport
       parentRoute: typeof AppSettingsRouteRoute
     }
+    '/_app/settings/sync': {
+      id: '/_app/settings/sync'
+      path: '/sync'
+      fullPath: '/settings/sync'
+      preLoaderRoute: typeof AppSettingsSyncRouteImport
+      parentRoute: typeof AppSettingsRouteRoute
+    }
     '/_app/settings/users': {
       id: '/_app/settings/users'
       path: '/users'
@@ -423,6 +442,7 @@ interface AppSettingsRouteRouteChildren {
   AppSettingsApiKeysRoute: typeof AppSettingsApiKeysRoute
   AppSettingsMarketRoute: typeof AppSettingsMarketRoute
   AppSettingsOpdsRoute: typeof AppSettingsOpdsRoute
+  AppSettingsSyncRoute: typeof AppSettingsSyncRoute
   AppSettingsUsersRoute: typeof AppSettingsUsersRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
 }
@@ -431,6 +451,7 @@ const AppSettingsRouteRouteChildren: AppSettingsRouteRouteChildren = {
   AppSettingsApiKeysRoute: AppSettingsApiKeysRoute,
   AppSettingsMarketRoute: AppSettingsMarketRoute,
   AppSettingsOpdsRoute: AppSettingsOpdsRoute,
+  AppSettingsSyncRoute: AppSettingsSyncRoute,
   AppSettingsUsersRoute: AppSettingsUsersRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,
 }

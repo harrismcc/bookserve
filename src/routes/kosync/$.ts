@@ -4,6 +4,7 @@ import { and, eq } from 'drizzle-orm'
 import { db } from '#/db'
 import { readingProgress } from '#/db/schema'
 import { apiKeyUser } from '#/lib/auth'
+import { getSetting } from '#/lib/settings'
 
 // KOSync, the protocol of KOReader's Progress sync plugin: set
 // <server>/kosync as its custom sync server and sign in with a Bookserve
@@ -13,6 +14,11 @@ export const Route = createFileRoute('/kosync/$')({
   server: {
     handlers: {
       ANY: async ({ request, params }) => {
+        if (!getSetting('kosyncEnabled')) {
+          // Not a 401, so readers keep their credentials and resume once
+          // sync is back on.
+          return error(503, 2000, 'Progress sync is turned off on this server.')
+        }
         const route = `${request.method} /${params._splat ?? ''}`
         if (route === 'POST /users/create') {
           // Accounts are Bookserve users. The client shows this message.

@@ -6,6 +6,7 @@ import { settings } from '#/db/schema'
 // App-wide settings stored in the `settings` table, with their defaults.
 const DEFAULTS = {
   opdsEnabled: true,
+  kosyncEnabled: true,
 }
 
 type Settings = typeof DEFAULTS
