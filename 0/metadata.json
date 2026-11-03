@@ -1,0 +1,42 @@
+{
+  "cli_version": "0.12.2",
+  "checkpoint_id": "01M6H8FYRH2BFD68AH1JBN1XTP",
+  "session_id": "T-01a1a246-102e-705a-83f6-0db19f82431b",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-03T17:49:45.029371664Z",
+  "branch": "main",
+  "checkpoints_count": 3,
+  "files_touched": [
+    ".github/workflows/ci.yml",
+    ".github/workflows/release.yml",
+    "README.md"
+  ],
+  "agent": "Amp",
+  "model": "anthropic/claude-opus-5-5",
+  "turn_id": "330b5ce08173",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 138606,
+    "cache_read_tokens": 790575,
+    "output_tokens": 15263,
+    "api_call_count": 14
+  },
+  "redaction": {
+    "replacements": 0,
+    "layers": {
+      "betterleaks": 0,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 0,
+      "credentialed_uri": 0,
+      "entropy": 0,
+      "key_context": 0,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  },
+  "session_metrics": {
+    "turn_count": 3
+  }
+}

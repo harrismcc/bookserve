@@ -1,0 +1,13 @@
+I want to set up GitHub Actions for this repo to automatically bundle and publish the Docker image. However, I also want to be using trunk-based development for this repo, so I've been and will continue to just be pushing straight to main. So as far as I understand how that will work is that when I push to main, we'll run, you know, a series of things: tests, type check, whatever, whatever, the build, and then eventually publish the image. What I don't understand is, like, exactly what the best thing to do is about deployments, especially if I'm going to merge, you know, two things in quick succession. What we want to do there. So can you look into best practices here? I know the Ampcode team are big proponents of this workflow, so maybe they know something.
+
+---
+
+I think I like the concept of what Amp does for artifacts that other people install, because this Docker image would be that. So I like having, like, a cadence for that. Is there a way that we can set that up automatically in our GitHub Actions so that work sort of continuously pushing out these edge releases, but then on a cadence, we, like, you know, promote one of those to the, like, proper, you know, we cut a real release.
+
+---
+
+What are the other versioning schemes that I could consider? CalVer seems okay. I imagine we could also just tag each image with the Git SHA?
+
+---
+
+Yeah, sounds good. Let's use the SHA for the every individual image, and then we'll use the Calver tag plus latest for each release that we cut. In terms of the cron, I think we should cut a release every day, like so we'll essentially have a nightly release. But we should make sure that that job only does so if there's a new image. So some days nothing will get pushed, right? I just might not work on the project, and if nothing gets pushed, then obviously we shouldn't cut a new release. We should also make sure that that workflow, whatever the workflow is to cut a release, is able to be triggered manually. That way, let's say if there's a security vulnerability or some kind of hot patch I want to do, I have the ability to push it, you know, faster than nightly.
