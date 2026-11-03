@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute, redirect } from '@tanstack/react-router'
 import { Check, Copy } from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
@@ -11,6 +11,9 @@ import { cn } from '#/lib/utils'
 import { getOpdsSettings, setOpdsEnabled } from '#/lib/settings-functions'
 
 export const Route = createFileRoute('/_app/settings/opds')({
+  beforeLoad: ({ context }) => {
+    if (context.user.role !== 'admin') throw redirect({ to: '/settings' })
+  },
   loader: () => getOpdsSettings(),
   component: OpdsServer,
 })
@@ -49,7 +52,12 @@ function OpdsServer() {
           <CopyField id="opds-url" value={url} />
         </dd>
         <dt className="text-muted-foreground">Sign in with</dt>
-        <dd>Bookserve username and password</dd>
+        <dd>
+          Bookserve username and an{' '}
+          <Link to="/settings/api-keys" className="underline">
+            API key
+          </Link>
+        </dd>
       </dl>
     </section>
   )

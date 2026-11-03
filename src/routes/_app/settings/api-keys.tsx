@@ -38,7 +38,7 @@ import {
 
 // A user's keys for reading apps: the password for KOReader progress sync
 // (/kosync) and the OPDS catalog (/opds).
-export const Route = createFileRoute('/_app/api-keys')({
+export const Route = createFileRoute('/_app/settings/api-keys')({
   loader: () => listApiKeys(),
   head: () => ({ meta: [{ title: 'API keys · Bookserve' }] }),
   component: ApiKeys,
@@ -52,9 +52,9 @@ function ApiKeys() {
   const [deleting, setDeleting] = useState<ApiKey | null>(null)
 
   return (
-    <main className="mx-auto grid max-w-3xl gap-4 px-4 py-8">
+    <section className="grid gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">API keys</h1>
+        <h2 className="text-lg font-semibold">API keys</h2>
         <Button onClick={() => setCreating(true)}>Create key</Button>
       </div>
       {keys.length === 0 ? (
@@ -97,7 +97,7 @@ function ApiKeys() {
       )}
       <CreateKeyDialog open={creating} onOpenChange={setCreating} />
       <DeleteKeyDialog apiKey={deleting} onClose={() => setDeleting(null)} />
-    </main>
+    </section>
   )
 }
 

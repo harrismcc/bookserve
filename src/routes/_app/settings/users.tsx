@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { MoreHorizontal } from 'lucide-react'
 
 import {
@@ -53,6 +53,9 @@ import {
 } from '#/lib/user-functions'
 
 export const Route = createFileRoute('/_app/settings/users')({
+  beforeLoad: ({ context }) => {
+    if (context.user.role !== 'admin') throw redirect({ to: '/settings' })
+  },
   loader: () => listUsers(),
   component: Users,
 })

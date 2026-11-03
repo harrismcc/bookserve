@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { Trash2 } from 'lucide-react'
 
 import {
@@ -45,6 +45,9 @@ import {
 } from '#/lib/market-functions'
 
 export const Route = createFileRoute('/_app/settings/market')({
+  beforeLoad: ({ context }) => {
+    if (context.user.role !== 'admin') throw redirect({ to: '/settings' })
+  },
   loader: async () => {
     const [sources, integrations] = await Promise.all([
       listMarketSources(),

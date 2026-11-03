@@ -6,7 +6,7 @@ import {
   useLocation,
   useRouter,
 } from '@tanstack/react-router'
-import { ChevronDown, KeyRound, LogOut } from 'lucide-react'
+import { ChevronDown, LogOut } from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
 import {
@@ -33,7 +33,7 @@ export const Route = createFileRoute('/_app')({
 const navItems = [
   { to: '/', label: 'Library', exact: true, also: '/books/' },
   { to: '/market', label: 'Market', admin: true },
-  { to: '/settings', label: 'Settings', admin: true },
+  { to: '/settings', label: 'Settings' },
 ] as const
 
 function AppShell() {
@@ -80,12 +80,6 @@ function AppShell() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link to="/api-keys">
-                  <KeyRound />
-                  API keys
-                </Link>
-              </DropdownMenuItem>
               <DropdownMenuItem onSelect={signOut}>
                 <LogOut />
                 Sign out
