@@ -56,6 +56,25 @@ export function bookView(row: BookRow) {
   }
 }
 
+// Cover URLs carry the row's update time, so the route can cache them for good.
+export const coverUrl = (book: {
+  id: string
+  coverPath: string | null
+  updatedAt: Date
+}) =>
+  book.coverPath
+    ? `/api/books/${book.id}/cover?v=${book.updatedAt.getTime()}`
+    : null
+
+// What a grid of books needs.
+export const bookCard = (book: ReturnType<typeof bookView>) => ({
+  id: book.id,
+  title: book.title,
+  authors: book.authors,
+  coverUrl: coverUrl(book),
+  missing: book.missing,
+})
+
 // Resolves a stored relative path under root, or null if it would escape it.
 export function resolveInside(root: string, relative: string) {
   const resolved = path.resolve(root, relative)

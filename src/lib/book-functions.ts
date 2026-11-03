@@ -3,19 +3,9 @@ import { and, desc, eq } from 'drizzle-orm'
 
 import { db } from '#/db'
 import { bookFiles, books, readingProgress } from '#/db/schema'
-import { bookView } from '#/lib/books'
+import { bookCard, bookView, coverUrl } from '#/lib/books'
 import { deleteBook, scanLibrary } from '#/lib/scanner'
 import { requireAdmin, requireSession } from '#/lib/user-functions'
-
-// Cover URLs carry the row's update time, so the route can cache them for good.
-const coverUrl = (book: {
-  id: string
-  coverPath: string | null
-  updatedAt: Date
-}) =>
-  book.coverPath
-    ? `/api/books/${book.id}/cover?v=${book.updatedAt.getTime()}`
-    : null
 
 export const listBooks = createServerFn({ method: 'GET' }).handler(async () => {
   await requireSession()
@@ -25,13 +15,7 @@ export const listBooks = createServerFn({ method: 'GET' }).handler(async () => {
     .all()
     .map(bookView)
     .sort((a, b) => a.sortTitle.localeCompare(b.sortTitle))
-    .map((book) => ({
-      id: book.id,
-      title: book.title,
-      authors: book.authors,
-      coverUrl: coverUrl(book),
-      missing: book.missing,
-    }))
+    .map(bookCard)
 })
 
 export const getBook = createServerFn({ method: 'GET' })

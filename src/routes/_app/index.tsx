@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react'
-import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { BookOpen, RefreshCw, Upload } from 'lucide-react'
 
-import { BookCover } from '#/components/book-cover'
+import { BookGrid } from '#/components/book-grid'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { listBooks, scanLibraryNow } from '#/lib/book-functions'
@@ -49,31 +49,9 @@ function Library() {
           </p>
         </div>
       ) : (
-        <ul className="mt-6 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          {shown.map((book) => (
-            <li
-              key={book.id}
-              className={cn(book.missing && 'opacity-50 grayscale')}
-            >
-              <Link
-                to="/books/$bookId"
-                params={{ bookId: book.id }}
-                className="group block"
-              >
-                <BookCover
-                  {...book}
-                  className="transition-shadow group-hover:shadow-md"
-                />
-                <p className="mt-2 line-clamp-2 text-sm font-medium">
-                  {book.title}
-                </p>
-                <p className="line-clamp-1 text-xs text-muted-foreground">
-                  {book.authors.join(', ')}
-                </p>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-6">
+          <BookGrid books={shown} />
+        </div>
       )}
     </main>
   )
