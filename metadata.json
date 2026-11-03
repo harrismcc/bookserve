@@ -1,0 +1,50 @@
+{
+  "cli_version": "0.12.2",
+  "checkpoint_id": "01M6HCX8MCNP6EESZQKGGK3R7D",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "README.md",
+    "src/db/schema.ts",
+    "src/lib/api-key-functions.ts",
+    "src/lib/auth.ts",
+    "src/lib/book-functions.ts",
+    "src/lib/scanner.ts",
+    "src/lib/user-functions.ts",
+    "src/routes/_app.tsx",
+    "src/routes/_app/api-keys.tsx",
+    "src/routes/_app/books/$bookId.tsx",
+    "src/routes/kosync/$.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 198892,
+    "cache_read_tokens": 13791574,
+    "output_tokens": 52942,
+    "api_call_count": 80
+  },
+  "redaction": {
+    "replacements": 71,
+    "layers": {
+      "betterleaks": 58,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 10,
+      "credentialed_uri": 0,
+      "entropy": 5,
+      "key_context": 0,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  }
+}

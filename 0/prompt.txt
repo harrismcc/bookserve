@@ -1,0 +1,5 @@
+Can you research how audiobookshelf or calibre server does progress tracking? If I wanted to make this server compatable with an audobookshelf or calibre plugin for my ereader how hard would that be?
+
+---
+
+Yeah lets do KoSync support, for auth it seems like in general we need a way for users to setup an API key because we need it for both KoSync and could use it instead of basic auth for the OPDS categlog potentially? LMK if you think that is a good idea
