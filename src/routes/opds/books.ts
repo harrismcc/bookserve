@@ -8,6 +8,7 @@ import { bookView } from '#/lib/books'
 import { ACQUISITION, bookEntry, feed } from '#/lib/opds-feed'
 
 const PAGE_SIZE = 50
+const collator = new Intl.Collator()
 
 // Acquisition feed of the books whose files are present:
 // ?sort=new for recently added (default: by title), ?q= to search, ?page=.
@@ -19,7 +20,7 @@ export const Route = createFileRoute('/opds/books')({
         const params = new URL(request.url).searchParams
         const recent = params.get('sort') === 'new'
         const query = params.get('q')?.trim() ?? ''
-        const needle = query.toLowerCase()
+        const words = query.toLowerCase().split(/\s+/).filter(Boolean)
 
         let list = db
           .select()
@@ -28,14 +29,18 @@ export const Route = createFileRoute('/opds/books')({
           .orderBy(desc(books.createdAt))
           .all()
           .map(bookView)
-        if (!recent) list.sort((a, b) => a.sortTitle.localeCompare(b.sortTitle))
-        if (query) {
-          list = list.filter((book) =>
-            [book.title, ...book.authors, book.series, book.isbn].some(
-              (field) => field?.toLowerCase().includes(needle),
-            ),
-          )
+        // Every word must appear in the title, an author, the series or the ISBN.
+        if (words.length) {
+          list = list.filter((book) => {
+            const fields = [book.title, ...book.authors, book.series, book.isbn]
+              .filter(Boolean)
+              .join('\n')
+              .toLowerCase()
+            return words.every((word) => fields.includes(word))
+          })
         }
+        if (!recent)
+          list.sort((a, b) => collator.compare(a.sortTitle, b.sortTitle))
 
         const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE))
         const page = Math.min(
@@ -71,7 +76,7 @@ export const Route = createFileRoute('/opds/books')({
         }
 
         return feed({
-          id: `urn:bookserve:${query ? `search:${query}` : recent ? 'new' : 'all'}`,
+          id: `urn:bookserve:${query ? `search:${encodeURIComponent(query)}` : recent ? 'new' : 'all'}`,
           title: query
             ? `Search: ${query}`
             : recent

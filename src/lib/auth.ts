@@ -51,22 +51,46 @@ export const auth = betterAuth({
   plugins: [username(), admin(), tanstackStartCookies()],
 })
 
-// Authorization header digest -> the password hash it was verified against.
-// Hashing is slow on a Pi and OPDS readers send Basic credentials with every
-// feed page and cover, so each one is checked once per password hash.
-const verifiedBasic = new Map<string, string>()
+const sha256 = (value: string) =>
+  crypto.createHash('sha256').update(value).digest('hex')
+
+// Per username: the password (as sha256) last verified and the account's
+// password hash it matched. Hashing is slow on a Pi and OPDS readers send
+// Basic credentials with every feed page and cover, so a password is checked
+// once per password hash; a password change forces a new check.
+const verifiedBasic = new Map<string, { password: string; hash: string }>()
+
+// Per username: unsuccessful Basic attempts in the current window. Better Auth's
+// sign-in rate limit doesn't cover this path, so guessing is throttled here.
+// A reader whose password is already verified isn't locked out by it.
+const basicAttempts = new Map<string, { count: number; until: number }>()
+const MAX_ATTEMPTS = 5
+const ATTEMPT_WINDOW_MS = 60_000
+
+function recordAttempt(name: string) {
+  const now = Date.now()
+  for (const [key, entry] of basicAttempts) {
+    if (entry.until <= now) basicAttempts.delete(key)
+  }
+  const entry = basicAttempts.get(name)
+  if (entry) entry.count++
+  else basicAttempts.set(name, { count: 1, until: now + ATTEMPT_WINDOW_MS })
+}
 
 // The signed-in user for a request: a session cookie, or HTTP Basic
 // credentials (username and password) from clients such as OPDS readers.
 export async function requestUser(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers })
   if (session) return session.user
-  const header = request.headers.get('authorization') ?? ''
-  const match = /^Basic\s+(\S+)$/i.exec(header)
+  const match = /^Basic\s+(\S+)$/i.exec(
+    request.headers.get('authorization') ?? '',
+  )
   if (!match) return null
   const decoded = Buffer.from(match[1], 'base64').toString('utf8')
   const sep = decoded.indexOf(':')
   if (sep < 0) return null
+  const name = decoded.slice(0, sep).toLowerCase()
+  const password = decoded.slice(sep + 1)
   const row = db
     .select({ user, hash: account.password })
     .from(user)
@@ -74,18 +98,41 @@ export async function requestUser(request: Request) {
       account,
       and(eq(account.userId, user.id), eq(account.providerId, 'credential')),
     )
-    .where(eq(user.username, decoded.slice(0, sep).toLowerCase()))
+    .where(eq(user.username, name))
     .get()
-  if (!row?.hash) return null
-  const { banned, banExpires } = row.user
-  if (banned && (!banExpires || banExpires > new Date())) return null
-  const digest = crypto.createHash('sha256').update(header).digest('hex')
-  if (verifiedBasic.get(digest) !== row.hash) {
-    const password = decoded.slice(sep + 1)
-    const ctx = await auth.$context
-    if (!(await ctx.password.verify({ hash: row.hash, password }))) return null
-    verifiedBasic.set(digest, row.hash)
+  const banned =
+    row?.user.banned &&
+    (!row.user.banExpires || row.user.banExpires > new Date())
+  if (banned) return null
+
+  const cached = verifiedBasic.get(name)
+  if (
+    row?.hash &&
+    cached?.hash === row.hash &&
+    cached.password === sha256(password)
+  ) {
+    return row.user
   }
+  const attempts = basicAttempts.get(name)
+  if (
+    attempts &&
+    attempts.count >= MAX_ATTEMPTS &&
+    attempts.until > Date.now()
+  ) {
+    return null
+  }
+  // Count the attempt before hashing, so parallel guesses can't all slip in
+  // under the limit; a correct password clears the count.
+  recordAttempt(name)
+  const ctx = await auth.$context
+  if (!row?.hash) {
+    // Hash anyway, so the response time doesn't reveal which usernames exist.
+    await ctx.password.hash(password)
+    return null
+  }
+  if (!(await ctx.password.verify({ hash: row.hash, password }))) return null
+  basicAttempts.delete(name)
+  verifiedBasic.set(name, { password: sha256(password), hash: row.hash })
   return row.user
 }
 
