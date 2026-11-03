@@ -1,0 +1,1 @@
+Lets add a tab to settings called OPDS Server that, at the very least, displays the info needed to connect to the provided OPDS server. Maybe there are settings to put there too idk. Maybe a toggle switch to enable/disable the OPDS server
