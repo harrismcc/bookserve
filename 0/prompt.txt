@@ -1,0 +1,3 @@
+"Account password still works for OPDS" you can break those it's fine, nobody uses this yet
+
+Where are api keys configured? Id expect settings but I don't see it there
