@@ -1,0 +1,90 @@
+name: Release
+
+# Promotes the newest image CI published from main to a CalVer release and
+# :latest. Runs nightly, and by hand (Actions > Release > Run workflow) for
+# hotfixes. Skips when that image is already released. Nothing is rebuilt:
+# users get exactly the image CI tested.
+on:
+  schedule:
+    - cron: '0 10 * * *' # 10:00 UTC, 2–3am Pacific
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: write
+  packages: write
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - id: pick
+        name: Pick the newest published image
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha=$(gh run list --workflow ci.yml --branch main --status success --limit 1 \
+            --json headSha --jq '.[0].headSha // empty')
+          if [ -z "$sha" ]; then
+            echo "No successful CI run on main yet; nothing to release."
+            exit 0
+          fi
+          released=$(git tag --points-at "$sha" --list 'v*')
+          if [ -n "$released" ]; then
+            echo "${sha::7} is already released as $released; nothing new to release."
+            exit 0
+          fi
+
+          # YYYY.MDD.N: 2026.1104.0, then 2026.1104.1 for a second release the
+          # same day. Always three numeric parts, so it is valid SemVer and
+          # update tools like Renovate order every release correctly.
+          base=$(date -u +%Y.%-m%d)
+          n=0
+          while git rev-parse -q --verify "refs/tags/v$base.$n" >/dev/null; do
+            n=$((n + 1))
+          done
+          version="$base.$n"
+
+          echo "Releasing ${sha::7} as $version"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - if: steps.pick.outputs.version
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # Tag the image before creating the git tag: if this fails, the next run
+      # retries, whereas an existing git tag would make it skip.
+      - if: steps.pick.outputs.version
+        env:
+          SHA: ${{ steps.pick.outputs.sha }}
+          VERSION: ${{ steps.pick.outputs.version }}
+        run: |
+          docker buildx imagetools create \
+            -t "$IMAGE:$VERSION" \
+            -t "$IMAGE:latest" \
+            "$IMAGE:sha-${SHA::7}"
+      - if: steps.pick.outputs.version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.pick.outputs.sha }}
+          VERSION: ${{ steps.pick.outputs.version }}
+        run: |
+          if prev=$(git describe --tags --abbrev=0 --match 'v*' "$SHA" 2>/dev/null); then
+            notes=$(git log --format='- %s (%h)' "$prev..$SHA")
+          else
+            notes="First release."
+          fi
+          notes+=$'\n\n'"\`docker pull $IMAGE:$VERSION\`"
+          gh release create "v$VERSION" --target "$SHA" --title "$VERSION" --notes "$notes"

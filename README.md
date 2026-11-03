@@ -5,12 +5,13 @@ A self-hosted ebook server. See `AGENTS.md` for the architecture and `docs/plan.
 ## Run with Docker
 
 ```bash
-docker build -t bookserve .
 docker run -d --name bookserve -p 3000:3000 \
   -v /path/to/config:/config \
   -v /path/to/books:/books \
-  bookserve
+  ghcr.io/harrismcc/bookserve:latest
 ```
+
+`latest` is the newest release, cut nightly when `main` has changed (versions like `2026.1104.0`). `edge` is the newest commit on `main` that passed CI, and `sha-<7-char commit>` pins one build.
 
 Open http://localhost:3000 and create the admin account. On first boot the container creates the database and an auth secret in `/config`.
 
