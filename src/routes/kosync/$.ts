@@ -58,6 +58,20 @@ const unauthorized = () => error(401, 2001, 'Unauthorized')
 const isDocumentId = (value: unknown): value is string =>
   typeof value === 'string' && /^[A-Za-z0-9_]{1,64}$/.test(value)
 
+// KOReader's optional `metadata` ("Send document metadata"): the file name,
+// title and authors. Only those string fields are kept, or null if none.
+function documentMetadata(value: unknown) {
+  if (typeof value !== 'object' || value === null) return null
+  const metadata: Record<string, string> = {}
+  for (const key of ['filename', 'title', 'authors'] as const) {
+    const field = (value as Record<string, unknown>)[key]
+    if (typeof field === 'string' && field.trim()) {
+      metadata[key] = field.trim().slice(0, 500)
+    }
+  }
+  return Object.keys(metadata).length > 0 ? metadata : null
+}
+
 // A reader pushes its position. The last write wins; the client resolves
 // conflicts with the server's timestamp.
 async function putProgress(userId: string, request: Request) {
@@ -78,11 +92,13 @@ async function putProgress(userId: string, request: Request) {
     return error(403, 2003, 'Invalid request')
   }
   const now = new Date(Math.floor(Date.now() / 1000) * 1000)
+  const metadata = documentMetadata(body.metadata)
   const fields = {
     progress: String(progress),
     percentage,
     device,
     deviceId: typeof body.device_id === 'string' ? body.device_id : null,
+    ...(metadata && { metadata }),
     updatedAt: now,
   }
   db.insert(readingProgress)

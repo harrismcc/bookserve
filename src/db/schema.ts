@@ -207,6 +207,13 @@ export const readingProgress = sqliteTable(
     percentage: real('percentage').notNull(),
     device: text('device').notNull(),
     deviceId: text('device_id'),
+    // What KOReader sends with "Send document metadata" on; kept from an
+    // earlier push when a later one has none.
+    metadata: text('metadata', { mode: 'json' }).$type<{
+      filename?: string
+      title?: string
+      authors?: string
+    }>(),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   },
   (table) => [primaryKey({ columns: [table.userId, table.document] })],

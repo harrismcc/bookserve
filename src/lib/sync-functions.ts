@@ -11,7 +11,8 @@ import { requireAdmin, requireSession } from '#/lib/user-functions'
 
 // The KOReader sync page: whether sync is on, the server URL, and every
 // position the user's readers have pushed, newest first. A position links to a
-// library book through the file's KOReader hash; others have no title.
+// library book through the file's KOReader hash; others show the title the
+// reader sent, if it sent metadata.
 export const getSyncSettings = createServerFn({ method: 'GET' }).handler(
   async () => {
     const { user } = await requireSession()
@@ -20,6 +21,7 @@ export const getSyncSettings = createServerFn({ method: 'GET' }).handler(
         document: readingProgress.document,
         percentage: readingProgress.percentage,
         device: readingProgress.device,
+        metadata: readingProgress.metadata,
         updatedAt: readingProgress.updatedAt,
         book: books,
       })

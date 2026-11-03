@@ -41,6 +41,9 @@ export const Route = createFileRoute('/_app/settings/sync')({
 
 type Progress = Awaited<ReturnType<typeof getSyncSettings>>['progress'][number]
 
+const bookTitle = (row: Progress) =>
+  row.book?.title ?? row.metadata?.title ?? row.metadata?.filename
+
 function Sync() {
   const { enabled, url, progress } = Route.useLoaderData()
   const { user } = Route.useRouteContext()
@@ -110,11 +113,11 @@ function Sync() {
                           {row.book.title}
                         </Link>
                       ) : (
-                        <span
-                          className="font-normal text-muted-foreground"
-                          title={row.document}
-                        >
-                          Not in library
+                        <span title={row.metadata?.filename ?? row.document}>
+                          {bookTitle(row) && `${bookTitle(row)} · `}
+                          <span className="font-normal text-muted-foreground">
+                            Not in library
+                          </span>
                         </span>
                       )}
                     </TableCell>
@@ -127,7 +130,7 @@ function Sync() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Reset ${row.book?.title ?? 'progress'}`}
+                        aria-label={`Reset ${bookTitle(row) ?? 'progress'}`}
                         onClick={() => setResetting(row)}
                       >
                         <RotateCcw />
@@ -176,7 +179,8 @@ function ResetDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Reset progress for {progress?.book?.title ?? 'this book'}?
+            Reset progress for{' '}
+            {(progress && bookTitle(progress)) ?? 'this book'}?
           </AlertDialogTitle>
         </AlertDialogHeader>
         {error && <p className="text-sm text-destructive">{error}</p>}

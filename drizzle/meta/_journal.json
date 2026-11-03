@@ -36,6 +36,13 @@
       "when": 1793735227288,
       "tag": "0004_kosync",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1793743734155,
+      "tag": "0005_kosync_metadata",
+      "breakpoints": true
     }
   ]
 }
