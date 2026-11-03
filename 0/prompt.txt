@@ -1,0 +1,17 @@
+For the KO sync feature that we added, how do I know if the syncing is working? Does it display the progress as a percentage when I look at the page for any given book, or like how does that work?
+
+---
+
+What happens if a sync is pushed to a book that doesn't exist in the library?
+
+---
+
+That makes sense, but is there some way for a user to be able to view that, or are they just stuck without it?
+
+---
+
+Wait, I don't understand. What is the fix? Fix for what? What's broken?
+
+---
+
+Yeah, we might want to create a new settings page for the sync stuff. I imagine there's also some things we could change in there, like, for example, the names of the readers. Like, we could give a friendly name, or we could give an interface where users can delete a sync. Like, let's say my, you know, my Kindle is set to 20%, but I want to reset that. Like, it could be a good surface area for that. I don't know if there are other settings we would want to change. Maybe like the OPDS, we would want to be able to turn on and off the syncing. That could be another setting there. I'll let you decide what makes sense there, but it seems like a useful way to also give users the ability to kind of see what devices have synced, when the last time they've synced, maybe what books we have synced, which some of them will be in the library, some might not be, all that kind of stuff.
