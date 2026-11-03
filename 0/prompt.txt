@@ -1,0 +1,13 @@
+Can we explore what a richer metadata experience would look like using Hardcover/Goodreads metadata? It could be nice to be able to show sort of a richer set of metadata. For example, when you're looking at a book, you'd be able to click on the author and see things from that author, or you'd be able to click on, like, it would suggest similar books, maybe from your library, maybe from the market. I'm just wondering, like, is there a way that we could make the metadata a little bit better and then use that richer metadata to provide a better user experience? So I want you to kind of dig in and investigate what's feasible here.
+
+---
+
+Okay, help me understand a little bit more. So if we use hardcover, does that require like an API key, and are there limits on that that we need to know about? And if we were to set this up, would we set it up so that each individual user who signs in adds their own hardcover account, or is the idea more that there be one for the server in total? And then I also want to know, like, it seems like we have a decision point to make where do we want to require a hardcover sign-in to even use this, or does it make more sense to have this be like an optional feature? And if so, are we creating a lot of kind of dual maintenance problems?
+
+---
+
+Ask me for a hardcover API key and I'll give you one that you can add to the amp projects secrets, then we can use that to build out the feature
+
+---
+
+ask again
