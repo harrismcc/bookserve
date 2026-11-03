@@ -1,0 +1,7 @@
+What happens if more than one device pushes syncs? Does this just show the most recent device that pushed an update, or how does that work?
+
+Also, in my KoReader, when I go to the sync page, there's this tick box I can do to send document metadata. What happens if that's ticked? Does that— is our server able to receive that, and does that send more information, like a file name potentially, that we could display? I just don't know what that does.
+
+---
+
+Yeah, if the metadata is sent, we should probably store that in our table here, just, you know, in case. And for the device names, I think we can have the server-side work, but if CoReader sends something over, then we should use that. And then the, like, server-side device name can be the fallback if it doesn't send something over.
