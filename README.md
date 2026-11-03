@@ -15,14 +15,15 @@ docker run -d --name bookserve -p 3000:3000 \
 
 Open http://localhost:3000 and create the admin account. On first boot the container creates the database and an auth secret in `/config`.
 
-| Variable                | Default (image) | Purpose                                                                                                      |
-| ----------------------- | --------------- | ------------------------------------------------------------------------------------------------------------ |
-| `BOOKSERVE_DATA_DIR`    | `/config`       | Database, generated secret, caches                                                                           |
-| `BOOKSERVE_LIBRARY_DIR` | `/books`        | Your books                                                                                                   |
-| `BOOKSERVE_URL`         | unset           | Public URL, e.g. `https://books.example.com`. Unset: taken from each request (works behind a reverse proxy). |
-| `BETTER_AUTH_SECRET`    | unset           | Overrides the secret generated in the data dir                                                               |
-| `GOOGLE_BOOKS_API_KEY`  | unset           | Enables Google Books matching (keyless requests are rejected by Google)                                      |
-| `PORT`                  | `3000`          | HTTP port                                                                                                    |
+| Variable                | Default (image) | Purpose                                                                                                                      |
+| ----------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `BOOKSERVE_DATA_DIR`    | `/config`       | Database, generated secret, caches                                                                                           |
+| `BOOKSERVE_LIBRARY_DIR` | `/books`        | Your books                                                                                                                   |
+| `BOOKSERVE_URL`         | unset           | Public URL, e.g. `https://books.example.com`. Unset: taken from each request (works behind a reverse proxy).                 |
+| `BETTER_AUTH_SECRET`    | unset           | Overrides the secret generated in the data dir                                                                               |
+| `GOOGLE_BOOKS_API_KEY`  | unset           | Enables Google Books matching (keyless requests are rejected by Google)                                                      |
+| `HARDCOVER_TOKEN`       | unset           | Enables Hardcover matching, author and series pages from Hardcover, and similar books (token from hardcover.app/account/api) |
+| `PORT`                  | `3000`          | HTTP port                                                                                                                    |
 
 ## Reading apps (OPDS and KOReader sync)
 

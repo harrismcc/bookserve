@@ -5,6 +5,7 @@
 export const PROVIDERS = [
   { id: 'openlibrary', name: 'Open Library' },
   { id: 'google', name: 'Google Books' },
+  { id: 'hardcover', name: 'Hardcover' },
 ] as const
 
 export type ProviderId = (typeof PROVIDERS)[number]['id']

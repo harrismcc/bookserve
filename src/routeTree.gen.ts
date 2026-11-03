@@ -19,7 +19,9 @@ import { Route as KosyncSplatRouteImport } from './routes/kosync/$'
 import { Route as OpdsIndexRouteImport } from './routes/opds/index'
 import { Route as OpdsBooksRouteImport } from './routes/opds/books'
 import { Route as OpdsSearchRouteImport } from './routes/opds/search'
+import { Route as AppAuthorsNameRouteImport } from './routes/_app/authors/$name'
 import { Route as AppBooksBookIdRouteImport } from './routes/_app/books/$bookId'
+import { Route as AppSeriesNameRouteImport } from './routes/_app/series/$name'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppSettingsApiKeysRouteImport } from './routes/_app/settings/api-keys'
 import { Route as AppSettingsMarketRouteImport } from './routes/_app/settings/market'
@@ -80,9 +82,19 @@ const OpdsSearchRoute = OpdsSearchRouteImport.update({
   path: '/opds/search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppAuthorsNameRoute = AppAuthorsNameRouteImport.update({
+  id: '/authors/$name',
+  path: '/authors/$name',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppBooksBookIdRoute = AppBooksBookIdRouteImport.update({
   id: '/books/$bookId',
   path: '/books/$bookId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSeriesNameRoute = AppSeriesNameRouteImport.update({
+  id: '/series/$name',
+  path: '/series/$name',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
@@ -146,7 +158,9 @@ export interface FileRoutesByFullPath {
   '/opds/books': typeof OpdsBooksRoute
   '/opds/search': typeof OpdsSearchRoute
   '/opds/': typeof OpdsIndexRoute
+  '/authors/$name': typeof AppAuthorsNameRoute
   '/books/$bookId': typeof AppBooksBookIdRoute
+  '/series/$name': typeof AppSeriesNameRoute
   '/settings/api-keys': typeof AppSettingsApiKeysRoute
   '/settings/market': typeof AppSettingsMarketRoute
   '/settings/opds': typeof AppSettingsOpdsRoute
@@ -167,7 +181,9 @@ export interface FileRoutesByTo {
   '/opds/search': typeof OpdsSearchRoute
   '/': typeof AppIndexRoute
   '/opds': typeof OpdsIndexRoute
+  '/authors/$name': typeof AppAuthorsNameRoute
   '/books/$bookId': typeof AppBooksBookIdRoute
+  '/series/$name': typeof AppSeriesNameRoute
   '/settings/api-keys': typeof AppSettingsApiKeysRoute
   '/settings/market': typeof AppSettingsMarketRoute
   '/settings/opds': typeof AppSettingsOpdsRoute
@@ -191,7 +207,9 @@ export interface FileRoutesById {
   '/opds/search': typeof OpdsSearchRoute
   '/_app/': typeof AppIndexRoute
   '/opds/': typeof OpdsIndexRoute
+  '/_app/authors/$name': typeof AppAuthorsNameRoute
   '/_app/books/$bookId': typeof AppBooksBookIdRoute
+  '/_app/series/$name': typeof AppSeriesNameRoute
   '/_app/settings/api-keys': typeof AppSettingsApiKeysRoute
   '/_app/settings/market': typeof AppSettingsMarketRoute
   '/_app/settings/opds': typeof AppSettingsOpdsRoute
@@ -215,7 +233,9 @@ export interface FileRouteTypes {
     | '/opds/books'
     | '/opds/search'
     | '/opds/'
+    | '/authors/$name'
     | '/books/$bookId'
+    | '/series/$name'
     | '/settings/api-keys'
     | '/settings/market'
     | '/settings/opds'
@@ -236,7 +256,9 @@ export interface FileRouteTypes {
     | '/opds/search'
     | '/'
     | '/opds'
+    | '/authors/$name'
     | '/books/$bookId'
+    | '/series/$name'
     | '/settings/api-keys'
     | '/settings/market'
     | '/settings/opds'
@@ -259,7 +281,9 @@ export interface FileRouteTypes {
     | '/opds/search'
     | '/_app/'
     | '/opds/'
+    | '/_app/authors/$name'
     | '/_app/books/$bookId'
+    | '/_app/series/$name'
     | '/_app/settings/api-keys'
     | '/_app/settings/market'
     | '/_app/settings/opds'
@@ -358,11 +382,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OpdsSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/authors/$name': {
+      id: '/_app/authors/$name'
+      path: '/authors/$name'
+      fullPath: '/authors/$name'
+      preLoaderRoute: typeof AppAuthorsNameRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/books/$bookId': {
       id: '/_app/books/$bookId'
       path: '/books/$bookId'
       fullPath: '/books/$bookId'
       preLoaderRoute: typeof AppBooksBookIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/series/$name': {
+      id: '/_app/series/$name'
+      path: '/series/$name'
+      fullPath: '/series/$name'
+      preLoaderRoute: typeof AppSeriesNameRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/settings/': {
@@ -463,14 +501,18 @@ interface AppRouteChildren {
   AppSettingsRouteRoute: typeof AppSettingsRouteRouteWithChildren
   AppMarketRoute: typeof AppMarketRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppAuthorsNameRoute: typeof AppAuthorsNameRoute
   AppBooksBookIdRoute: typeof AppBooksBookIdRoute
+  AppSeriesNameRoute: typeof AppSeriesNameRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppSettingsRouteRoute: AppSettingsRouteRouteWithChildren,
   AppMarketRoute: AppMarketRoute,
   AppIndexRoute: AppIndexRoute,
+  AppAuthorsNameRoute: AppAuthorsNameRoute,
   AppBooksBookIdRoute: AppBooksBookIdRoute,
+  AppSeriesNameRoute: AppSeriesNameRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

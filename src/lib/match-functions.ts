@@ -8,6 +8,7 @@ import { books } from '#/db/schema'
 import type { MatchedMetadata } from '#/lib/books'
 import { config } from '#/lib/config'
 import { googleBooks } from '#/lib/metadata/google-books'
+import { hardcover } from '#/lib/metadata/hardcover'
 import { downloadCover } from '#/lib/metadata/http'
 import { openLibrary } from '#/lib/metadata/open-library'
 import type {
@@ -24,6 +25,7 @@ import { requireAdmin } from '#/lib/user-functions'
 const IMPLEMENTATIONS: Record<ProviderId, MetadataProvider> = {
   openlibrary: openLibrary,
   google: googleBooks,
+  hardcover,
 }
 
 function checkProvider(id: unknown): ProviderId {

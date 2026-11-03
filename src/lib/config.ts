@@ -13,4 +13,6 @@ export const config = {
   migrationsDir: path.resolve('drizzle'),
   publicUrl: process.env.BOOKSERVE_URL || undefined,
   googleBooksApiKey: process.env.GOOGLE_BOOKS_API_KEY || undefined,
+  hardcoverToken:
+    process.env.HARDCOVER_TOKEN?.replace(/^Bearer\s+/i, '') || undefined,
 }

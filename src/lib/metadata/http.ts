@@ -37,8 +37,11 @@ export async function request(
   }
 }
 
-export async function fetchJson<T>(url: string): Promise<T> {
-  const res = await request(url, TIMEOUT_MS)
+export async function fetchJson<T>(
+  url: string,
+  init?: Parameters<typeof request>[2],
+): Promise<T> {
+  const res = await request(url, TIMEOUT_MS, init)
   if (!res.ok) throw new HttpError(res.status)
   try {
     return (await res.json()) as T

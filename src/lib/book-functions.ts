@@ -49,6 +49,8 @@ export const getBook = createServerFn({ method: 'GET' })
       ...book,
       coverUrl: coverUrl({ ...book, coverPath, updatedAt }),
       matched: row.matched != null,
+      // Changes on every match, revert and rescan.
+      version: updatedAt.getTime(),
       progress: progress
         ? { ...progress, updatedAt: progress.updatedAt.toISOString() }
         : null,
