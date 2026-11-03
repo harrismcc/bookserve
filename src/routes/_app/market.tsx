@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Link,
   createFileRoute,
@@ -31,7 +31,7 @@ import {
 } from '#/lib/market-functions'
 import { mergeBooks, mergeHome, mergeShelves } from '#/lib/market/merge'
 import type { MergedBook, MergedShelf, SourceRef } from '#/lib/market/merge'
-import type { BookDetails, Home, Listing } from '#/lib/market/sdk'
+import type { BookDetails } from '#/lib/market/sdk'
 
 type MarketSearch = { q?: string; shelf?: SourceRef[] }
 
@@ -67,124 +67,141 @@ export const Route = createFileRoute('/_app/market')({
   component: Market,
 })
 
-type SourceResult = {
-  source: number
-  sourceName: string
-  loading: boolean
+type Answer = {
+  source: Source
+  view: Awaited<ReturnType<typeof marketBrowse>> | null
   error: string | null
-  home: Home | null
-  pages: Listing[]
-  cursor: string | null
+}
+
+type MarketState = {
+  loading: boolean
+  errors: Array<{ source: number; sourceName: string; error: string }>
+  home: ReturnType<typeof mergeHome> | null
+  title: string | null
+  shelves: MergedShelf[]
+  books: MergedBook[]
+  // The next page's cursor per source id. A source that fails keeps its
+  // cursor, so "Load more" retries it.
+  cursors: Record<number, string>
+}
+
+const EMPTY: MarketState = {
+  loading: true,
+  errors: [],
+  home: null,
+  title: null,
+  shelves: [],
+  books: [],
+  cursors: {},
 }
 
 const message = (err: unknown) =>
   err instanceof Error ? err.message : 'Request failed'
 
-// Loads the view from each source on its own and keeps their results (and
-// pages) apart; the views merge them. Which books are in the library is kept
+// Adds a batch of answers, one per source asked, to what is shown.
+function settle(
+  prev: MarketState,
+  answers: Answer[],
+  q: string | undefined,
+): MarketState {
+  const listings = answers.flatMap((a) =>
+    a.view?.kind === 'listing'
+      ? [{ source: a.source.id, sourceName: a.source.name, ...a.view.listing }]
+      : [],
+  )
+  const homes = answers.flatMap((a) =>
+    a.view?.kind === 'home'
+      ? [{ source: a.source.id, sourceName: a.source.name, ...a.view.home }]
+      : [],
+  )
+  const cursors = { ...prev.cursors }
+  for (const l of listings) {
+    if (l.nextCursor) cursors[l.source] = l.nextCursor
+    else delete cursors[l.source]
+  }
+  return {
+    loading: false,
+    errors: answers.flatMap((a) =>
+      a.error
+        ? [{ source: a.source.id, sourceName: a.source.name, error: a.error }]
+        : [],
+    ),
+    home: homes.length ? mergeHome(homes) : prev.home,
+    title: prev.title ?? listings[0]?.title ?? null,
+    shelves: prev.shelves.length
+      ? prev.shelves
+      : mergeShelves(listings.map((l) => ({ ...l, items: l.shelves }))),
+    books: mergeBooks(
+      prev.books,
+      listings.map((l) => ({ ...l, items: l.books })),
+      q,
+    ),
+    cursors,
+  }
+}
+
+// Loads the view from every source and shows them together once all have
+// answered, so nothing moves when a slow source arrives; "Load more" adds the
+// next page from each the same way. Which books are in the library is kept
 // for every offer seen, so adding a book shows everywhere it appears.
 function useMarket(sources: Source[], search: MarketSearch) {
-  const [results, setResults] = useState<SourceResult[]>([])
+  const [state, setState] = useState(EMPTY)
   const [inLibrary, setInLibrary] = useState<InLibrary>({})
   const key = JSON.stringify([search.q, search.shelf])
   // Bumped per search, so answers for an earlier one are dropped.
   const generation = useRef(0)
 
-  const update = (source: number, change: Partial<SourceResult>) =>
-    setResults((prev) =>
-      prev.map((r) => (r.source === source ? { ...r, ...change } : r)),
-    )
   const remember = (found: InLibrary) =>
     setInLibrary((prev) => ({ ...prev, ...found }))
 
+  function browse(targets: Source[], cursors: Record<number, string>) {
+    const gen = generation.current
+    void Promise.all(
+      targets.map((s) =>
+        marketBrowse({
+          data: {
+            sourceId: s.id,
+            q: search.q,
+            shelf: search.shelf?.find((r) => r.source === s.id)?.id,
+            cursor: cursors[s.id],
+          },
+        }).then(
+          (view): Answer => ({ source: s, view, error: null }),
+          (err): Answer => ({ source: s, view: null, error: message(err) }),
+        ),
+      ),
+    ).then((answers) => {
+      if (gen !== generation.current) return
+      for (const a of answers) if (a.view) remember(a.view.inLibrary)
+      setState((prev) => settle(prev, answers, search.q))
+    })
+  }
+
   useEffect(() => {
-    const gen = ++generation.current
-    const current = () => gen === generation.current
-    const targets = sources.flatMap(
-      (s): Array<{ s: Source; shelf?: string }> => {
-        if (search.q) return s.searchable ? [{ s }] : []
-        if (!search.shelf) return [{ s }]
-        const ref = search.shelf.find((r) => r.source === s.id)
-        return ref ? [{ s, shelf: ref.id }] : []
-      },
+    generation.current++
+    setState(EMPTY)
+    browse(
+      sources.filter((s) =>
+        search.q
+          ? s.searchable
+          : !search.shelf || search.shelf.some((r) => r.source === s.id),
+      ),
+      {},
     )
-    setResults(
-      targets.map(({ s }) => ({
-        source: s.id,
-        sourceName: s.name,
-        loading: true,
-        error: null,
-        home: null,
-        pages: [],
-        cursor: null,
-      })),
-    )
-    for (const { s, shelf } of targets) {
-      marketBrowse({ data: { sourceId: s.id, q: search.q, shelf } }).then(
-        (view) => {
-          if (!current()) return
-          remember(view.inLibrary)
-          update(
-            s.id,
-            view.kind === 'home'
-              ? { loading: false, home: view.home }
-              : {
-                  loading: false,
-                  pages: [view.listing],
-                  cursor: view.listing.nextCursor,
-                },
-          )
-        },
-        (err) =>
-          current() && update(s.id, { loading: false, error: message(err) }),
-      )
-    }
     // `key` covers the search; sources only change on reload.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [key, sources])
 
-  // The next page from every source that has one. A source that fails keeps
-  // its cursor, so "Load more" retries it.
-  function loadMore() {
-    const gen = generation.current
-    for (const r of results.filter((p) => p.cursor && !p.loading)) {
-      update(r.source, { loading: true, error: null })
-      const ref = search.shelf?.find((s) => s.source === r.source)
-      marketBrowse({
-        data: {
-          sourceId: r.source,
-          q: search.q,
-          shelf: ref?.id,
-          cursor: r.cursor!,
-        },
-      }).then(
-        (view) => {
-          if (gen !== generation.current || view.kind !== 'listing') return
-          remember(view.inLibrary)
-          setResults((prev) =>
-            prev.map((p) =>
-              p.source === r.source
-                ? {
-                    ...p,
-                    loading: false,
-                    pages: [...p.pages, view.listing],
-                    cursor: view.listing.nextCursor,
-                  }
-                : p,
-            ),
-          )
-        },
-        (err) =>
-          gen === generation.current &&
-          update(r.source, { loading: false, error: message(err) }),
-      )
-    }
-  }
-
   return {
-    results,
+    ...state,
     inLibrary,
-    loadMore,
+    loadMore() {
+      setState((prev) => ({ ...prev, loading: true }))
+      browse(
+        sources.filter((s) => state.cursors[s.id]),
+        state.cursors,
+      )
+    },
     markAdded: (offer: SourceRef, bookId: string) =>
       remember({ [`${offer.source}:${offer.id}`]: bookId }),
   }
@@ -200,7 +217,7 @@ function Market() {
   const search = Route.useSearch()
   const navigate = useNavigate({ from: Route.fullPath })
   const market = useMarket(sources, search)
-  const loading = market.results.some((r) => r.loading)
+  const loading = market.loading
 
   if (!sources.length) {
     return (
@@ -217,7 +234,7 @@ function Market() {
     )
   }
 
-  const errors = market.results.filter((r) => r.error)
+  const errors = market.errors
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
@@ -283,21 +300,8 @@ function HomeView({
   market: Market
   multiSource: boolean
 }) {
-  const { results } = market
-  const { rows, shelves } = useMemo(
-    () =>
-      mergeHome(
-        results.flatMap((r) =>
-          r.home
-            ? [{ ...r.home, source: r.source, sourceName: r.sourceName }]
-            : [],
-        ),
-      ),
-    [results],
-  )
-  if (!rows.length && !shelves.length) {
-    return results.some((r) => r.loading) ? <Loading /> : null
-  }
+  if (!market.home) return market.loading ? <Loading /> : null
+  const { rows, shelves } = market.home
   return (
     <div className="grid gap-10">
       {rows.map((row) => (
@@ -350,31 +354,9 @@ function ListingView({
   multiSource: boolean
 }) {
   const search = Route.useSearch()
-  const { results } = market
-  // Page by page, so a source's later pages never jump ahead of another's
-  // earlier ones.
-  const books = useMemo(() => {
-    let merged: MergedBook[] = []
-    const pages = Math.max(0, ...results.map((r) => r.pages.length))
-    for (let i = 0; i < pages; i++) {
-      merged = mergeBooks(
-        merged,
-        results.map((r) => ({ ...r, items: r.pages[i]?.books ?? [] })),
-      )
-    }
-    return merged
-  }, [results])
-  const shelves = useMemo(
-    () =>
-      mergeShelves(
-        results.map((r) => ({ ...r, items: r.pages[0]?.shelves ?? [] })),
-      ),
-    [results],
-  )
-  const title =
-    search.q ?? results.find((r) => r.pages[0])?.pages[0].title ?? 'Market'
-  const loading = results.some((r) => r.loading)
-  const hasMore = results.some((r) => r.cursor)
+  const { books, shelves, loading } = market
+  const title = search.q ?? market.title ?? 'Market'
+  const hasMore = Object.keys(market.cursors).length > 0
   const empty = !books.length && !shelves.length
 
   return (

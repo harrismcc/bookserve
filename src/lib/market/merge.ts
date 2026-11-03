@@ -94,12 +94,28 @@ function interleave<T>(lists: Array<SourceResults<T>>) {
   return out
 }
 
+// How well a book matches a search: the same title first, then the share of
+// the query's words in its title and authors, then whether several sources
+// have it.
+function relevance(book: MergedBook, query: string) {
+  const words = new Set(norm(query).split(' ').filter(Boolean))
+  const text = new Set(norm([book.title, ...book.authors].join(' ')).split(' '))
+  const found = [...words].filter((w) => text.has(w)).length
+  return (
+    (workTitle(book.title) === workTitle(query) ? 2 : 0) +
+    found / Math.max(1, words.size) +
+    (book.offers.length > 1 ? 0.25 : 0)
+  )
+}
+
 // Appends each source's books to `existing`, merging a book into an earlier
 // one with a shared key, unless that one already has a copy from the same
-// source (then they are different editions and stay apart).
+// source (then they are different editions and stay apart). With a `query`,
+// the new books are sorted by how well they match it.
 export function mergeBooks(
   existing: MergedBook[],
   lists: Array<SourceResults<BookSummary>>,
+  query?: string,
 ) {
   const merged = existing.map((b) => ({ ...b, offers: [...b.offers] }))
   const keys = merged.map((b) => new Set(bookKeys(b)))
@@ -174,12 +190,15 @@ export function mergeBooks(
         (at.get(`${b.source}:${b.id}`) ?? -1),
     )
   }
-  // Earlier pages stay put; new books follow in rank order.
+  // Earlier pages stay put; new books follow, best match first, then in rank
+  // order.
+  const added = merged.slice(existing.length)
+  const score = new Map(added.map((b) => [b, query ? relevance(b, query) : 0]))
   return [
     ...merged.slice(0, existing.length),
-    ...merged
-      .slice(existing.length)
-      .sort((a, b) => rank.get(a)! - rank.get(b)!),
+    ...added.sort(
+      (a, b) => score.get(b)! - score.get(a)! || rank.get(a)! - rank.get(b)!,
+    ),
   ]
 }
 
