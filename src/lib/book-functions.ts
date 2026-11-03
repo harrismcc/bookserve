@@ -1,19 +1,11 @@
 import { createServerFn } from '@tanstack/react-start'
-import { getRequestHeaders } from '@tanstack/react-start/server'
-import { eq } from 'drizzle-orm'
+import { and, desc, eq } from 'drizzle-orm'
 
 import { db } from '#/db'
-import { books } from '#/db/schema'
-import { auth } from '#/lib/auth'
+import { bookFiles, books, readingProgress } from '#/db/schema'
 import { bookView } from '#/lib/books'
 import { deleteBook, scanLibrary } from '#/lib/scanner'
-import { requireAdmin } from '#/lib/user-functions'
-
-async function requireSession() {
-  const session = await auth.api.getSession({ headers: getRequestHeaders() })
-  if (!session) throw new Error('Unauthorized')
-  return session
-}
+import { requireAdmin, requireSession } from '#/lib/user-functions'
 
 // Cover URLs carry the row's update time, so the route can cache them for good.
 const coverUrl = (book: {
@@ -45,14 +37,37 @@ export const listBooks = createServerFn({ method: 'GET' }).handler(async () => {
 export const getBook = createServerFn({ method: 'GET' })
   .validator((bookId: string) => bookId)
   .handler(async ({ data: bookId }) => {
-    await requireSession()
+    const session = await requireSession()
     const row = db.select().from(books).where(eq(books.id, bookId)).get()
     if (!row) return null
     const { coverPath, updatedAt, sortTitle, ...book } = bookView(row)
+    // The user's latest position from a KOSync reader, matched by file hash.
+    const progress = db
+      .select({
+        percentage: readingProgress.percentage,
+        device: readingProgress.device,
+        updatedAt: readingProgress.updatedAt,
+      })
+      .from(readingProgress)
+      .innerJoin(
+        bookFiles,
+        eq(bookFiles.koreaderHash, readingProgress.document),
+      )
+      .where(
+        and(
+          eq(bookFiles.bookId, bookId),
+          eq(readingProgress.userId, session.user.id),
+        ),
+      )
+      .orderBy(desc(readingProgress.updatedAt))
+      .get()
     return {
       ...book,
       coverUrl: coverUrl({ ...book, coverPath, updatedAt }),
       matched: row.matched != null,
+      progress: progress
+        ? { ...progress, updatedAt: progress.updatedAt.toISOString() }
+        : null,
     }
   })
 

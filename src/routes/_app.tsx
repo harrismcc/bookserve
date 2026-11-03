@@ -6,7 +6,7 @@ import {
   useLocation,
   useRouter,
 } from '@tanstack/react-router'
-import { ChevronDown, LogOut } from 'lucide-react'
+import { ChevronDown, KeyRound, LogOut } from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
 import {
@@ -80,6 +80,12 @@ function AppShell() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link to="/api-keys">
+                  <KeyRound />
+                  API keys
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem onSelect={signOut}>
                 <LogOut />
                 Sign out

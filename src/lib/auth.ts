@@ -7,7 +7,7 @@ import { tanstackStartCookies } from 'better-auth/tanstack-start'
 import { and, eq } from 'drizzle-orm'
 
 import { db } from '#/db'
-import { account, user } from '#/db/schema'
+import { account, apiKeys, user } from '#/db/schema'
 import { config } from '#/lib/config'
 
 // BETTER_AUTH_SECRET wins; otherwise generate one on first boot and keep it in the data dir.
@@ -54,6 +54,33 @@ export const auth = betterAuth({
 const sha256 = (value: string) =>
   crypto.createHash('sha256').update(value).digest('hex')
 
+export const md5 = (value: string) =>
+  crypto.createHash('md5').update(value).digest('hex')
+
+// API keys are stored as sha256(md5(key)): KOSync clients send md5(key), and
+// a key used as a Basic password is md5'd first to get the same value.
+export const apiKeyHash = (md5Key: string) => sha256(md5Key)
+
+const isBanned = (u: typeof user.$inferSelect) =>
+  Boolean(u.banned && (!u.banExpires || u.banExpires > new Date()))
+
+// The user an API key belongs to, given the username and md5(key). Keys are
+// random, so a lookup needs no throttling or slow hashing.
+export function apiKeyUser(name: string, md5Key: string) {
+  const row = db
+    .select({ user })
+    .from(apiKeys)
+    .innerJoin(user, eq(user.id, apiKeys.userId))
+    .where(
+      and(
+        eq(apiKeys.keyHash, apiKeyHash(md5Key)),
+        eq(user.username, name.toLowerCase()),
+      ),
+    )
+    .get()
+  return row && !isBanned(row.user) ? row.user : null
+}
+
 // Per username: the password (as sha256) last verified and the account's
 // password hash it matched. Hashing is slow on a Pi and OPDS readers send
 // Basic credentials with every feed page and cover, so a password is checked
@@ -78,7 +105,8 @@ function recordAttempt(name: string) {
 }
 
 // The signed-in user for a request: a session cookie, or HTTP Basic
-// credentials (username and password) from clients such as OPDS readers.
+// credentials (username and an API key or the password) from clients such as
+// OPDS readers.
 export async function requestUser(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers })
   if (session) return session.user
@@ -91,6 +119,8 @@ export async function requestUser(request: Request) {
   if (sep < 0) return null
   const name = decoded.slice(0, sep).toLowerCase()
   const password = decoded.slice(sep + 1)
+  const keyUser = apiKeyUser(name, md5(password))
+  if (keyUser) return keyUser
   const row = db
     .select({ user, hash: account.password })
     .from(user)
@@ -100,10 +130,7 @@ export async function requestUser(request: Request) {
     )
     .where(eq(user.username, name))
     .get()
-  const banned =
-    row?.user.banned &&
-    (!row.user.banExpires || row.user.banExpires > new Date())
-  if (banned) return null
+  if (row && isBanned(row.user)) return null
 
   const cached = verifiedBasic.get(name)
   if (

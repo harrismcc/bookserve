@@ -167,12 +167,24 @@ async function importDiskFile(
     existing.size === file.size &&
     existing.mtimeMs === file.mtimeMs
   ) {
+    // Files scanned before KOSync support get their KOReader hash now.
+    if (!existing.koreaderHash) {
+      db.update(bookFiles)
+        .set({ koreaderHash: await koreaderHash(file.abs) })
+        .where(eq(bookFiles.id, existing.id))
+        .run()
+    }
     return { result: 'unchanged', bookId: existing.bookId }
   }
 
   const data = await fsp.readFile(file.abs)
   const hash = crypto.createHash('sha256').update(data).digest('hex')
-  const stats = { size: file.size, mtimeMs: file.mtimeMs, hash }
+  const stats = {
+    size: file.size,
+    mtimeMs: file.mtimeMs,
+    hash,
+    koreaderHash: await koreaderHash(file.abs),
+  }
 
   if (!existing) {
     const moved = db
@@ -234,6 +246,25 @@ async function importDiskFile(
   })
   console.log(`[scan] ${existing ? 'Updated' : 'Added'} ${file.rel}`)
   return { result: existing ? 'updated' : 'added', bookId }
+}
+
+// KOReader's document id for a file (util.partialMD5): the MD5 of 1 KiB samples
+// at offsets 0 and 1024 << 2i for i = 0..10, stopping at the end of the file.
+async function koreaderHash(file: string) {
+  const md5 = crypto.createHash('md5')
+  const handle = await fsp.open(file)
+  try {
+    const sample = Buffer.alloc(1024)
+    for (let i = -1; i <= 10; i++) {
+      const offset = i < 0 ? 0 : 1024 << (2 * i)
+      const { bytesRead } = await handle.read(sample, 0, 1024, offset)
+      if (!bytesRead) break
+      md5.update(sample.subarray(0, bytesRead))
+    }
+  } finally {
+    await handle.close()
+  }
+  return md5.digest('hex')
 }
 
 // Writes the cover to <data>/covers/<bookId>.<ext>, replacing any previous one.

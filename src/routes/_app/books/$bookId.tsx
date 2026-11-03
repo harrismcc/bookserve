@@ -59,6 +59,24 @@ function Book() {
             {book.seriesIndex != null && ` #${book.seriesIndex}`}
           </p>
         )}
+        {book.progress && (
+          <div className="mt-6 max-w-sm">
+            <div className="flex justify-between text-sm">
+              <span className="font-medium">
+                {Math.round(book.progress.percentage * 100)}%
+              </span>
+              <span className="text-muted-foreground">
+                {book.progress.device} · {book.progress.updatedAt.slice(0, 10)}
+              </span>
+            </div>
+            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary"
+                style={{ width: `${book.progress.percentage * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
         <div className="mt-6 flex flex-wrap gap-3">
           {book.missing ? (
             <Button disabled>File missing</Button>

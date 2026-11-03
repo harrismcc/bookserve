@@ -10,6 +10,13 @@ import { checkPassword, checkUsername } from '#/lib/credentials'
 
 export type Role = 'admin' | 'user'
 
+// Server functions any signed-in user may call start with this.
+export const requireSession = createServerOnlyFn(async () => {
+  const session = await auth.api.getSession({ headers: getRequestHeaders() })
+  if (!session) throw new Error('Unauthorized')
+  return session
+})
+
 // Every admin server function handler starts with this. Pass `headers` on to
 // auth.api calls so Better Auth's admin plugin checks the same session.
 export const requireAdmin = createServerOnlyFn(async () => {

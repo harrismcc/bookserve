@@ -13,8 +13,10 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppApiKeysRouteImport } from './routes/_app/api-keys'
 import { Route as AppMarketRouteImport } from './routes/_app/market'
 import { Route as AppSettingsRouteRouteImport } from './routes/_app/settings/route'
+import { Route as KosyncSplatRouteImport } from './routes/kosync/$'
 import { Route as OpdsIndexRouteImport } from './routes/opds/index'
 import { Route as OpdsBooksRouteImport } from './routes/opds/books'
 import { Route as OpdsSearchRouteImport } from './routes/opds/search'
@@ -47,6 +49,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppApiKeysRoute = AppApiKeysRouteImport.update({
+  id: '/api-keys',
+  path: '/api-keys',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMarketRoute = AppMarketRouteImport.update({
   id: '/market',
   path: '/market',
@@ -56,6 +63,11 @@ const AppSettingsRouteRoute = AppSettingsRouteRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => AppRoute,
+} as any)
+const KosyncSplatRoute = KosyncSplatRouteImport.update({
+  id: '/kosync/$',
+  path: '/kosync/$',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const OpdsIndexRoute = OpdsIndexRouteImport.update({
   id: '/opds/',
@@ -123,7 +135,9 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/setup': typeof SetupRoute
   '/settings': typeof AppSettingsRouteRouteWithChildren
+  '/api-keys': typeof AppApiKeysRoute
   '/market': typeof AppMarketRoute
+  '/kosync/$': typeof KosyncSplatRoute
   '/opds/books': typeof OpdsBooksRoute
   '/opds/search': typeof OpdsSearchRoute
   '/opds/': typeof OpdsIndexRoute
@@ -140,7 +154,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/setup': typeof SetupRoute
+  '/api-keys': typeof AppApiKeysRoute
   '/market': typeof AppMarketRoute
+  '/kosync/$': typeof KosyncSplatRoute
   '/opds/books': typeof OpdsBooksRoute
   '/opds/search': typeof OpdsSearchRoute
   '/': typeof AppIndexRoute
@@ -161,7 +177,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/setup': typeof SetupRoute
   '/_app/settings': typeof AppSettingsRouteRouteWithChildren
+  '/_app/api-keys': typeof AppApiKeysRoute
   '/_app/market': typeof AppMarketRoute
+  '/kosync/$': typeof KosyncSplatRoute
   '/opds/books': typeof OpdsBooksRoute
   '/opds/search': typeof OpdsSearchRoute
   '/_app/': typeof AppIndexRoute
@@ -183,7 +201,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/setup'
     | '/settings'
+    | '/api-keys'
     | '/market'
+    | '/kosync/$'
     | '/opds/books'
     | '/opds/search'
     | '/opds/'
@@ -200,7 +220,9 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/setup'
+    | '/api-keys'
     | '/market'
+    | '/kosync/$'
     | '/opds/books'
     | '/opds/search'
     | '/'
@@ -220,7 +242,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/setup'
     | '/_app/settings'
+    | '/_app/api-keys'
     | '/_app/market'
+    | '/kosync/$'
     | '/opds/books'
     | '/opds/search'
     | '/_app/'
@@ -240,6 +264,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   SetupRoute: typeof SetupRoute
+  KosyncSplatRoute: typeof KosyncSplatRoute
   OpdsBooksRoute: typeof OpdsBooksRoute
   OpdsSearchRoute: typeof OpdsSearchRoute
   OpdsIndexRoute: typeof OpdsIndexRoute
@@ -279,6 +304,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/api-keys': {
+      id: '/_app/api-keys'
+      path: '/api-keys'
+      fullPath: '/api-keys'
+      preLoaderRoute: typeof AppApiKeysRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/market': {
       id: '/_app/market'
       path: '/market'
@@ -292,6 +324,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/settings'
       preLoaderRoute: typeof AppSettingsRouteRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/kosync/$': {
+      id: '/kosync/$'
+      path: '/kosync/$'
+      fullPath: '/kosync/$'
+      preLoaderRoute: typeof KosyncSplatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/opds/': {
       id: '/opds/'
@@ -399,6 +438,7 @@ const AppSettingsRouteRouteWithChildren =
 
 interface AppRouteChildren {
   AppSettingsRouteRoute: typeof AppSettingsRouteRouteWithChildren
+  AppApiKeysRoute: typeof AppApiKeysRoute
   AppMarketRoute: typeof AppMarketRoute
   AppIndexRoute: typeof AppIndexRoute
   AppBooksBookIdRoute: typeof AppBooksBookIdRoute
@@ -406,6 +446,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppSettingsRouteRoute: AppSettingsRouteRouteWithChildren,
+  AppApiKeysRoute: AppApiKeysRoute,
   AppMarketRoute: AppMarketRoute,
   AppIndexRoute: AppIndexRoute,
   AppBooksBookIdRoute: AppBooksBookIdRoute,
@@ -417,6 +458,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   SetupRoute: SetupRoute,
+  KosyncSplatRoute: KosyncSplatRoute,
   OpdsBooksRoute: OpdsBooksRoute,
   OpdsSearchRoute: OpdsSearchRoute,
   OpdsIndexRoute: OpdsIndexRoute,

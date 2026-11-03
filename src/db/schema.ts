@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import {
   index,
   integer,
+  primaryKey,
   real,
   sqliteTable,
   text,
@@ -155,6 +156,8 @@ export const bookFiles = sqliteTable(
     mtimeMs: integer('mtime_ms').notNull(),
     // sha256 of the file; finds files that were moved or renamed.
     hash: text('hash').notNull(),
+    // KOReader's partial MD5 of the file: the document id KOSync clients send.
+    koreaderHash: text('koreader_hash'),
     format: text('format').notNull(),
     createdAt: integer('created_at', { mode: 'timestamp_ms' })
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
@@ -167,7 +170,46 @@ export const bookFiles = sqliteTable(
   (table) => [
     index('book_files_book_id_idx').on(table.bookId),
     index('book_files_hash_idx').on(table.hash),
+    index('book_files_koreader_hash_idx').on(table.koreaderHash),
   ],
+)
+
+// Keys a user creates for devices: the password for KOSync and OPDS. Only a
+// hash is kept: sha256 of md5(key), because KOSync clients send md5(key).
+export const apiKeys = sqliteTable(
+  'api_keys',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    keyHash: text('key_hash').notNull().unique(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+  },
+  (table) => [index('api_keys_user_id_idx').on(table.userId)],
+)
+
+// The last position a user's reader reported for a document (KOSync). Keyed by
+// the client's document id, so files outside the library sync too; a book's
+// progress is found through book_files.koreader_hash.
+export const readingProgress = sqliteTable(
+  'reading_progress',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    document: text('document').notNull(),
+    // Opaque to the server: an XPointer for EPUBs, a page number for PDFs.
+    progress: text('progress').notNull(),
+    percentage: real('percentage').notNull(),
+    device: text('device').notNull(),
+    deviceId: text('device_id'),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.document] })],
 )
 
 // Market sources: an integration (src/lib/market/integrations) plus the
