@@ -7,7 +7,7 @@ import { eq } from 'drizzle-orm'
 import { strToU8, zipSync } from 'fflate'
 
 import { db } from '#/db'
-import { user } from '#/db/schema'
+import { marketSources, user } from '#/db/schema'
 import { auth, syntheticEmail } from '#/lib/auth'
 import { config } from '#/lib/config'
 import { scanLibrary } from '#/lib/scanner'
@@ -232,6 +232,35 @@ function png(width: number, height: number, [r, g, b]: number[]) {
   )
 }
 
+// A Z-Library Market source, when ZLIBRARY_EMAIL and ZLIBRARY_PASSWORD are set.
+function seedMarket() {
+  const email = process.env.ZLIBRARY_EMAIL
+  const password = process.env.ZLIBRARY_PASSWORD
+  if (!email || !password) return
+  const exists = db
+    .select({ id: marketSources.id })
+    .from(marketSources)
+    .where(eq(marketSources.integration, 'z-library'))
+    .get()
+  if (exists) {
+    console.log('[seed] Z-Library source exists, skipping')
+    return
+  }
+  db.insert(marketSources)
+    .values({
+      integration: 'z-library',
+      name: 'Z-Library',
+      settings: {
+        url: process.env.ZLIBRARY_URL || 'https://z-lib.gd',
+        email,
+        password,
+      },
+    })
+    .run()
+  console.log('[seed] Added Z-Library Market source')
+}
+
 await seedUsers()
+seedMarket()
 seedLibrary()
 await scanLibrary()
