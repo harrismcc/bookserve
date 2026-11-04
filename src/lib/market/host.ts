@@ -109,6 +109,10 @@ function summary(book: BookSummary): BookSummary {
     coverUrl: httpUrl(book.coverUrl),
     isbn: str(book.isbn, 20).replace(/[^\dX]/gi, '') || null,
     language: str(book.language, 20) || null,
+    rating:
+      typeof book.rating === 'number' && book.rating >= 0 && book.rating <= 5
+        ? book.rating
+        : null,
   }
 }
 

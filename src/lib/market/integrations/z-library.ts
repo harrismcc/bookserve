@@ -285,6 +285,8 @@ function summary(ctx: IntegrationContext, book: Json): BookSummary | null {
     coverUrl: resolveUrl(text(book.cover), base(ctx)),
     isbn: isbn(book),
     language: language(book.language),
+    // A 0 score means nobody rated it.
+    rating: Number(book.qualityScore) || null,
   }
 }
 

@@ -652,6 +652,7 @@ function BookDialog({
         multiSource && o.sourceName,
         book.offers.length > 1 && o.book?.publisher,
         book.offers.length > 1 && o.book?.publishedDate,
+        book.offers.length > 1 && o.book?.rating && `★ ${o.book.rating}`,
         f.label,
         formatSize(f.size),
       ]

@@ -16,6 +16,9 @@ export type BookSummary = {
   isbn?: string | null
   // ISO 639 code, e.g. `en`; copies in different languages never merge.
   language?: string | null
+  // How users rate this copy (the file, not the book), 0–5; null when
+  // unrated. The Market offers a source's best-rated copy first.
+  rating?: number | null
 }
 
 export type Format = {

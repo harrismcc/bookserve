@@ -6,7 +6,7 @@ import type { BookSummary, Home, RowKind, ShelfLink } from '#/lib/market/sdk'
 // A source's id for a book or shelf.
 export type SourceRef = { source: number; id: string }
 
-export type Offer = SourceRef & { sourceName: string }
+export type Offer = SourceRef & { sourceName: string; rating: number | null }
 
 export type MergedBook = Omit<BookSummary, 'id'> & { offers: Offer[] }
 
@@ -144,6 +144,7 @@ export function mergeBooks(
       source: list.source,
       sourceName: list.sourceName,
       id: item.id,
+      rating: item.rating ?? null,
     }
     const candidate = (b: MergedBook) =>
       !(
@@ -178,7 +179,9 @@ export function mergeBooks(
     for (const key of itemKeys) keys[index].add(key)
     if (rank.has(book)) rank.set(book, Math.min(rank.get(book)!, position))
   }
-  // Offers in rank order too (copies from earlier pages first).
+  // Offers in rank order too (copies from earlier pages first). Then each
+  // source's best-rated copy takes that source's first slot; ratings from
+  // different stores aren't comparable, so sources keep their order.
   const at = new Map(
     items.map((i) => [`${i.list.source}:${i.item.id}`, i.position]),
   )
@@ -187,6 +190,16 @@ export function mergeBooks(
       (a, b) =>
         (at.get(`${a.source}:${a.id}`) ?? -1) -
         (at.get(`${b.source}:${b.id}`) ?? -1),
+    )
+    const best = [...book.offers].sort(
+      (a, b) => (b.rating ?? -1) - (a.rating ?? -1),
+    )
+    book.offers = book.offers.map(
+      (o) =>
+        best.splice(
+          best.findIndex((c) => c.source === o.source),
+          1,
+        )[0],
     )
   }
   // Earlier pages stay put; new books follow, best match first, then in rank
