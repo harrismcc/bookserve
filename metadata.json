@@ -1,0 +1,43 @@
+{
+  "cli_version": "0.12.2",
+  "checkpoint_id": "01M6KZSNCKH51JTP2MG0716WPX",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/plan.md",
+    "src/components/add-to-library-button.tsx",
+    "src/components/discover-row.tsx",
+    "src/routes/_app/market_.book.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 255906,
+    "cache_read_tokens": 6884869,
+    "output_tokens": 42640,
+    "api_call_count": 70
+  },
+  "redaction": {
+    "replacements": 32,
+    "layers": {
+      "betterleaks": 2,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 4,
+      "credentialed_uri": 0,
+      "entropy": 28,
+      "key_context": 0,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  }
+}

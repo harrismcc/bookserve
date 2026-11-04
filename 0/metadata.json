@@ -1,0 +1,45 @@
+{
+  "cli_version": "0.12.2",
+  "checkpoint_id": "01M6KZSNCKH51JTP2MG0716WPX",
+  "session_id": "T-01a1a3a9-2803-709a-b730-54ad653263b8",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-04T19:15:33.633942079Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/plan.md",
+    "src/components/add-to-library-button.tsx",
+    "src/components/discover-row.tsx",
+    "src/routes/_app/market_.book.tsx"
+  ],
+  "agent": "Amp",
+  "model": "anthropic/claude-opus-5-5",
+  "turn_id": "b5a4f20fd13a",
+  "checkpoint_transcript_start": 180,
+  "transcript_lines_at_start": 180,
+  "compact_transcript_start": 93,
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 255906,
+    "cache_read_tokens": 6884869,
+    "output_tokens": 42640,
+    "api_call_count": 70
+  },
+  "redaction": {
+    "replacements": 32,
+    "layers": {
+      "betterleaks": 2,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 4,
+      "credentialed_uri": 0,
+      "entropy": 28,
+      "key_context": 0,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  },
+  "session_metrics": {
+    "turn_count": 5
+  }
+}

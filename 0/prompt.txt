@@ -1,0 +1,5 @@
+It's a bit awkward that there is no loading state for this metadata and it all just pops in? Causes some annoying layout shift
+
+---
+
+Can we also spice up the market page with hardcover stuff? We should also be able to see author and related books on market listings. I also think we should move those to being a page instead of a modal.
