@@ -104,14 +104,14 @@ function relevance(book: MergedBook, query: string) {
   return (
     (workTitle(book.title) === workTitle(query) ? 2 : 0) +
     found / Math.max(1, words.size) +
-    (book.offers.length > 1 ? 0.25 : 0)
+    (new Set(book.offers.map((o) => o.source)).size > 1 ? 0.25 : 0)
   )
 }
 
 // Appends each source's books to `existing`, merging a book into an earlier
-// one with a shared key, unless that one already has a copy from the same
-// source (then they are different editions and stay apart). With a `query`,
-// the new books are sorted by how well they match it.
+// one with a shared key, including copies from the same source (catalogs
+// such as Z-Library list many uploads of one book). With a `query`, the new
+// books are sorted by how well they match it.
 export function mergeBooks(
   existing: MergedBook[],
   lists: Array<SourceResults<BookSummary>>,
@@ -146,7 +146,6 @@ export function mergeBooks(
       id: item.id,
     }
     const candidate = (b: MergedBook) =>
-      !b.offers.some((o) => o.source === list.source) &&
       !(
         lang(b.language) &&
         lang(item.language) &&

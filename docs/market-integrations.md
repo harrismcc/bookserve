@@ -114,7 +114,7 @@ export const example = defineIntegration({
 
 Then register it in `INTEGRATIONS` in `src/lib/market/host.ts`. It shows up in the "Add source" dialog, with a form built from `settings`.
 
-The Market shows every source at once, merging the same book from different sources into one entry, and home rows or shelves with the same title into one. Books merge on ISBN, or on title (up to any `:`, `;`, `(`, `[`, `-` or `--`) plus the first author's surname, never across languages. Set `isbn` and `language` on a `BookSummary` when the catalog has them.
+The Market shows every source at once, merging the same book from different sources into one entry, and home rows or shelves with the same title into one. Books merge on ISBN, or on title (up to any `:`, `;`, `(`, `[`, `-` or `--`) plus the first author's surname, never across languages. Copies from the same source merge too, so a catalog's many uploads of one book show as one entry. Set `isbn` and `language` on a `BookSummary` when the catalog has them.
 
 ## Rules
 

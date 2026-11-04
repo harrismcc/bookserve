@@ -628,10 +628,10 @@ function BookDialog({
       // Keep the user's choice when the offers change, if it still exists.
       setChoice((prev) =>
         loaded.some((o) =>
-          o.book?.formats.some((f) => `${o.source}|${f.id}` === prev),
+          o.book?.formats.some((f) => `${o.source}:${o.id}|${f.id}` === prev),
         )
           ? prev
-          : first && `${first.source}|${first.book!.formats[0].id}`,
+          : first && `${first.source}:${first.id}|${first.book!.formats[0].id}`,
       )
     })
     return () => {
@@ -646,9 +646,15 @@ function BookDialog({
   const formats = (offers ?? []).flatMap((o) =>
     (o.book?.formats ?? []).map((f) => ({
       ...f,
-      key: `${o.source}|${f.id}`,
+      key: `${o.source}:${o.id}|${f.id}`,
       offer: o,
-      text: [multiSource && o.sourceName, f.label, formatSize(f.size)]
+      text: [
+        multiSource && o.sourceName,
+        book.offers.length > 1 && o.book?.publisher,
+        book.offers.length > 1 && o.book?.publishedDate,
+        f.label,
+        formatSize(f.size),
+      ]
         .filter(Boolean)
         .join(' · '),
     })),
@@ -684,7 +690,10 @@ function BookDialog({
             {offers
               ?.filter((o) => o.error)
               .map((o) => (
-                <p key={o.source} className="text-sm text-destructive">
+                <p
+                  key={`${o.source}:${o.id}`}
+                  className="text-sm text-destructive"
+                >
                   Could not load {o.sourceName}: {o.error}
                 </p>
               ))}

@@ -261,11 +261,13 @@ const authors = (value: unknown) =>
     .map((name) => name.trim())
     .filter(Boolean)
 
+// `identifier` is a list such as "9781984826787,1984826786,B07WQQXSGL";
+// take the first entry that is an ISBN.
 const isbn = (book: Json) =>
   [book.identifier, book.isbn, book.isbn13, book.isbn10]
-    .map(text)
-    .find(Boolean)
-    ?.replace(/[^\dX]/gi, '') || null
+    .flatMap((value) => text(value).split(','))
+    .map((value) => value.replace(/[\s-]/g, '').toUpperCase())
+    .find((value) => /^(\d{13}|\d{9}[\dX])$/.test(value)) ?? null
 
 const language = (value: unknown) => {
   const name = text(value).toLowerCase()
