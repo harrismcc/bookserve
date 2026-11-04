@@ -5,10 +5,10 @@ import {
   notFound,
   useRouter,
 } from '@tanstack/react-router'
-import { Download, RotateCcw, SearchCheck, Star, Trash2 } from 'lucide-react'
+import { Download, RotateCcw, SearchCheck, Trash2 } from 'lucide-react'
 
 import { BookCover } from '#/components/book-cover'
-import { DiscoverRow, DiscoverRowSkeleton } from '#/components/discover-row'
+import { HardcoverRows, HardcoverTags } from '#/components/discover-row'
 import { MatchDialog } from '#/components/match-dialog'
 import {
   AlertDialog,
@@ -92,41 +92,7 @@ function Book() {
             </Link>
           </p>
         )}
-        {loading && (
-          <div className="mt-3 flex h-6 animate-pulse items-center gap-2">
-            <div className="h-4 w-28 rounded bg-muted" />
-            {[14, 16, 12, 18, 20].map((w) => (
-              <div
-                key={w}
-                className="h-5 rounded-full bg-muted"
-                style={{ width: `${w * 0.25}rem` }}
-              />
-            ))}
-          </div>
-        )}
-        {discovery && (
-          <div className="mt-3 flex animate-in flex-wrap items-center gap-2 text-sm text-muted-foreground duration-300 fade-in">
-            {discovery.rating != null && (
-              <a
-                href={discovery.url}
-                target="_blank"
-                rel="noreferrer"
-                className="mr-1 flex items-center gap-1 hover:text-foreground"
-              >
-                <Star className="size-3.5 fill-current" />
-                {discovery.rating.toFixed(1)} on Hardcover
-              </a>
-            )}
-            {[...discovery.genres, ...discovery.moods].map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border px-2 py-0.5 text-xs"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
+        <HardcoverTags discovery={discovery} loading={loading} />
         {book.progress && (
           <div className="mt-6 max-w-sm">
             <div className="flex justify-between text-sm">
@@ -173,28 +139,11 @@ function Book() {
             ))}
           </dl>
         )}
-        {loading && (
-          <div className="mt-10 grid gap-8">
-            <DiscoverRowSkeleton />
-            <DiscoverRowSkeleton />
-          </div>
-        )}
-        {discovery && (
-          <div className="mt-10 grid gap-8">
-            {discovery.moreByAuthor && (
-              <DiscoverRow
-                title={`More by ${discovery.moreByAuthor.name}`}
-                books={discovery.moreByAuthor.books}
-                admin={user.role === 'admin'}
-              />
-            )}
-            <DiscoverRow
-              title="Similar books"
-              books={discovery.similar}
-              admin={user.role === 'admin'}
-            />
-          </div>
-        )}
+        <HardcoverRows
+          discovery={discovery}
+          loading={loading}
+          admin={user.role === 'admin'}
+        />
       </div>
     </main>
   )

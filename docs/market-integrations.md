@@ -12,20 +12,20 @@ Built-in integrations:
 
 ## Goals
 
-- **One Market, many stores.** Users see a single store: one search, one home, one book dialog. Each source's books appear in it as the same cards, merged with copies from other sources. A new store adds books to the Market; it does not add a new page or feature.
+- **One Market, many stores.** Users see a single store: one search, one home, one book page. Each source's books appear in it as the same cards, merged with copies from other sources. A new store adds books to the Market; it does not add a new page or feature.
 - **All store-specific code lives in its integration.** Quirks of a catalog (odd feeds, auth, id formats, missing fields) are handled there, so the rest of Bookserve never knows which store a book came from.
 - **Anyone can write one.** The contract in `sdk.ts` is small and stable enough that a third party can write an integration without reading the rest of the codebase. Integrations will later be loadable from `<data>/plugins/`, so the built-in ones must follow the same rules.
 
 ## Where code goes
 
-| Code                                                                                | Lives in                                                            |
-| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Talking to a store: fetching, parsing, auth, mapping to `BookSummary`/`BookDetails` | `src/lib/market/integrations/<id>.ts`                               |
-| The contract and helpers integrations may use                                       | `src/lib/market/sdk.ts`                                             |
-| Running integrations: context, cache, timeouts, cleaning their output               | `src/lib/market/host.ts`                                            |
-| Merging sources: deduplication, rows, shelves                                       | `src/lib/market/merge.ts`                                           |
-| Server functions: sources, browsing, adding to the library                          | `src/lib/market-functions.ts`                                       |
-| UI                                                                                  | `src/routes/_app/market.tsx`, `src/routes/_app/settings/market.tsx` |
+| Code                                                                                | Lives in                                                                                                |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Talking to a store: fetching, parsing, auth, mapping to `BookSummary`/`BookDetails` | `src/lib/market/integrations/<id>.ts`                                                                   |
+| The contract and helpers integrations may use                                       | `src/lib/market/sdk.ts`                                                                                 |
+| Running integrations: context, cache, timeouts, cleaning their output               | `src/lib/market/host.ts`                                                                                |
+| Merging sources: deduplication, rows, shelves                                       | `src/lib/market/merge.ts`                                                                               |
+| Server functions: sources, browsing, adding to the library                          | `src/lib/market-functions.ts`                                                                           |
+| UI                                                                                  | `src/routes/_app/market.tsx`, `src/routes/_app/market_.book.tsx`, `src/routes/_app/settings/market.tsx` |
 
 Never:
 

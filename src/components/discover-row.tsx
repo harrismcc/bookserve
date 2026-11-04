@@ -1,8 +1,8 @@
 import { Link } from '@tanstack/react-router'
-import { Check } from 'lucide-react'
+import { Check, Star } from 'lucide-react'
 
 import { BookCover } from '#/components/book-cover'
-import type { DiscoverBook } from '#/lib/discover-functions'
+import type { DiscoverBook, discoverWork } from '#/lib/discover-functions'
 import { cn } from '#/lib/utils'
 
 // A scrolling row (or a grid) of Hardcover books. A book in the library opens its page;
@@ -127,5 +127,90 @@ function DiscoverCard<T extends DiscoverBook>({
     <a href={book.url} target="_blank" rel="noreferrer" className="group block">
       {body}
     </a>
+  )
+}
+
+type Discovery = Awaited<ReturnType<typeof discoverWork>>
+
+// Under a book's title: its Hardcover rating, genres and moods. `discovery`
+// is undefined while loading and null when Hardcover has nothing.
+export function HardcoverTags({
+  discovery,
+  loading,
+}: {
+  discovery: Discovery | undefined
+  loading: boolean
+}) {
+  if (loading) {
+    return (
+      <div className="mt-3 flex h-6 animate-pulse items-center gap-2">
+        <div className="h-4 w-28 rounded bg-muted" />
+        {[14, 16, 12, 18, 20].map((w) => (
+          <div
+            key={w}
+            className="h-5 rounded-full bg-muted"
+            style={{ width: `${w * 0.25}rem` }}
+          />
+        ))}
+      </div>
+    )
+  }
+  if (!discovery) return null
+  return (
+    <div className="mt-3 flex animate-in flex-wrap items-center gap-2 text-sm text-muted-foreground duration-300 fade-in">
+      {discovery.rating != null && (
+        <a
+          href={discovery.url}
+          target="_blank"
+          rel="noreferrer"
+          className="mr-1 flex items-center gap-1 hover:text-foreground"
+        >
+          <Star className="size-3.5 fill-current" />
+          {discovery.rating.toFixed(1)} on Hardcover
+        </a>
+      )}
+      {[...discovery.genres, ...discovery.moods].map((tag) => (
+        <span key={tag} className="rounded-full border px-2 py-0.5 text-xs">
+          {tag}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+// At the bottom of a book page: more by the author and similar books.
+export function HardcoverRows({
+  discovery,
+  loading,
+  admin,
+}: {
+  discovery: Discovery | undefined
+  loading: boolean
+  admin: boolean
+}) {
+  if (loading) {
+    return (
+      <div className="mt-10 grid gap-8">
+        <DiscoverRowSkeleton />
+        <DiscoverRowSkeleton />
+      </div>
+    )
+  }
+  if (!discovery) return null
+  return (
+    <div className="mt-10 grid gap-8">
+      {discovery.moreByAuthor && (
+        <DiscoverRow
+          title={`More by ${discovery.moreByAuthor.name}`}
+          books={discovery.moreByAuthor.books}
+          admin={admin}
+        />
+      )}
+      <DiscoverRow
+        title="Similar books"
+        books={discovery.similar}
+        admin={admin}
+      />
+    </div>
   )
 }

@@ -164,6 +164,18 @@ export const removeMarketSource = createServerFn({ method: 'POST' })
 // One source's home, a shelf, or search results; the Market calls it once per
 // source and merges the results as they arrive, so a slow or failing source
 // doesn't hold up the others.
+// Which of these offers are in the library, for a listing shown again.
+export const marketInLibrary = createServerFn({ method: 'POST' })
+  .validator((refs: Array<{ source: number; id: string }>) =>
+    (Array.isArray(refs) ? refs : [])
+      .slice(0, 2000)
+      .map((r) => ({ source: Number(r?.source), id: str(r?.id) })),
+  )
+  .handler(async ({ data }) => {
+    await requireAdmin()
+    return inLibrary(data)
+  })
+
 export const marketBrowse = createServerFn({ method: 'GET' })
   .validator(
     (data: {

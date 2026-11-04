@@ -5,33 +5,22 @@ import {
   redirect,
   useNavigate,
 } from '@tanstack/react-router'
-import { Check, ChevronRight, Loader2, Plus, Search, Store } from 'lucide-react'
+import { ChevronRight, Loader2, Search, Store } from 'lucide-react'
 
+import { AddToLibraryButton } from '#/components/add-to-library-button'
+import type { AddState } from '#/components/add-to-library-button'
 import { BookCover } from '#/components/book-cover'
 import { Button } from '#/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '#/components/ui/select'
 import {
   listMarketSources,
   marketAdd,
   marketBook,
   marketBrowse,
+  marketInLibrary,
 } from '#/lib/market-functions'
 import { mergeBooks, mergeHome, mergeShelves } from '#/lib/market/merge'
 import type { MergedBook, MergedShelf, SourceRef } from '#/lib/market/merge'
-import type { BookDetails } from '#/lib/market/sdk'
 
 type MarketSearch = { q?: string; shelf?: SourceRef[] }
 
@@ -140,14 +129,26 @@ function settle(
   }
 }
 
+// The last listing shown, so coming back from a book page shows it again,
+// with every page loaded and the scroll position, instead of reloading it.
+let last: { key: string; state: MarketState; inLibrary: InLibrary } | null =
+  null
+
 // Loads the view from every source and shows them together once all have
 // answered, so nothing moves when a slow source arrives; "Load more" adds the
 // next page from each the same way. Which books are in the library is kept
 // for every offer seen, so adding a book shows everywhere it appears.
 function useMarket(sources: Source[], search: MarketSearch) {
-  const [state, setState] = useState(EMPTY)
-  const [inLibrary, setInLibrary] = useState<InLibrary>({})
   const key = JSON.stringify([search.q, search.shelf])
+  const [restored] = useState(() =>
+    last?.key === key && !last.state.loading ? last : null,
+  )
+  const [state, setState] = useState(restored?.state ?? EMPTY)
+  const [inLibrary, setInLibrary] = useState<InLibrary>(
+    restored?.inLibrary ?? {},
+  )
+  // The search whose results `state` holds or is loading.
+  const loaded = useRef(restored ? key : null)
   // Bumped per search, so answers for an earlier one are dropped.
   const generation = useRef(0)
 
@@ -178,6 +179,20 @@ function useMarket(sources: Source[], search: MarketSearch) {
   }
 
   useEffect(() => {
+    last = { key, state, inLibrary }
+  }, [key, state, inLibrary])
+
+  useEffect(() => {
+    if (loaded.current === key) {
+      // Restored; books may have been added since, on their pages.
+      const refs = [
+        ...state.books,
+        ...(state.home?.rows ?? []).flatMap((r) => r.books),
+      ].flatMap((b) => b.offers.map(({ source, id }) => ({ source, id })))
+      void marketInLibrary({ data: refs }).then(remember, () => {})
+      return
+    }
+    loaded.current = key
     generation.current++
     setState(EMPTY)
     browse(
@@ -276,9 +291,9 @@ function Market() {
           </div>
         )}
         {search.q || search.shelf ? (
-          <ListingView market={market} multiSource={sources.length > 1} />
+          <ListingView market={market} />
         ) : (
-          <HomeView market={market} multiSource={sources.length > 1} />
+          <HomeView market={market} />
         )}
       </div>
     </main>
@@ -293,13 +308,7 @@ function Loading() {
   )
 }
 
-function HomeView({
-  market,
-  multiSource,
-}: {
-  market: Market
-  multiSource: boolean
-}) {
+function HomeView({ market }: { market: Market }) {
   if (!market.home) return market.loading ? <Loading /> : null
   const { rows, shelves } = market.home
   return (
@@ -326,11 +335,7 @@ function HomeView({
                 key={`${book.offers[0].source}:${book.offers[0].id}`}
                 className="w-36 shrink-0 snap-start sm:w-40"
               >
-                <BookCard
-                  book={book}
-                  market={market}
-                  multiSource={multiSource}
-                />
+                <BookCard book={book} market={market} />
               </li>
             ))}
           </ul>
@@ -346,13 +351,7 @@ function HomeView({
   )
 }
 
-function ListingView({
-  market,
-  multiSource,
-}: {
-  market: Market
-  multiSource: boolean
-}) {
+function ListingView({ market }: { market: Market }) {
   const search = Route.useSearch()
   const { books, shelves, loading } = market
   const title = search.q ?? market.title ?? 'Market'
@@ -383,7 +382,7 @@ function ListingView({
         <ul className="grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {books.map((book) => (
             <li key={`${book.offers[0].source}:${book.offers[0].id}`}>
-              <BookCard book={book} market={market} multiSource={multiSource} />
+              <BookCard book={book} market={market} />
             </li>
           ))}
         </ul>
@@ -431,30 +430,9 @@ function ShelfGrid({ shelves }: { shelves: MergedShelf[] }) {
   )
 }
 
-type AddState =
-  | { status: 'idle' | 'adding' }
-  | { status: 'added'; bookId: string }
-  | { status: 'error'; message: string }
-
-function formatSize(bytes: number | null) {
-  if (!bytes) return null
-  return bytes >= 1_000_000
-    ? `${(bytes / 1_000_000).toFixed(1)} MB`
-    : `${Math.max(1, Math.round(bytes / 1000))} KB`
-}
-
-// A book: the cover and title open its details; the button adds the best
-// format from the first source that has one (the dialog lets you pick).
-function BookCard({
-  book,
-  market,
-  multiSource,
-}: {
-  book: MergedBook
-  market: Market
-  multiSource: boolean
-}) {
-  const [open, setOpen] = useState(false)
+// A book: the cover and title open its page; the button adds the best
+// format from the first source that has one (the page lets you pick).
+function BookCard({ book, market }: { book: MergedBook; market: Market }) {
   const [local, setLocal] = useState<AddState>({ status: 'idle' })
   const libraryBookId = libraryId(book, market.inLibrary)
   const state: AddState = libraryBookId
@@ -469,18 +447,16 @@ function BookCard({
   }
 
   // Tries each source in turn until one has an EPUB that downloads.
-  async function add(choice?: SourceRef & { formatId: string }) {
+  async function add() {
     setLocal({ status: 'adding' })
     let error = 'No EPUB available'
-    for (const offer of choice ? [choice] : book.offers) {
+    for (const offer of book.offers) {
       try {
-        const formatId =
-          choice?.formatId ??
-          (
-            await marketBook({
-              data: { sourceId: offer.source, bookId: offer.id },
-            })
-          ).book.formats[0]?.id
+        const formatId = (
+          await marketBook({
+            data: { sourceId: offer.source, bookId: offer.id },
+          })
+        ).book.formats[0]?.id
         if (!formatId) continue
         await addOffer(offer, formatId)
         setLocal({ status: 'idle' })
@@ -494,10 +470,12 @@ function BookCard({
 
   return (
     <div className="flex h-full flex-col">
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="group text-left"
+      <Link
+        to="/market/book"
+        search={{
+          offers: book.offers.map(({ source, id }) => ({ source, id })),
+        }}
+        className="group block"
       >
         <BookCover
           title={book.title}
@@ -511,9 +489,9 @@ function BookCard({
         <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
           {book.authors.join(', ')}
         </p>
-      </button>
+      </Link>
       <div className="mt-auto pt-3">
-        <AddButton
+        <AddToLibraryButton
           state={state}
           onAdd={() => add()}
           size="sm"
@@ -523,253 +501,6 @@ function BookCard({
           <p className="mt-1 text-xs text-destructive">{state.message}</p>
         )}
       </div>
-      {open && (
-        <BookDialog
-          book={book}
-          multiSource={multiSource}
-          onClose={() => setOpen(false)}
-          state={state}
-          onInLibrary={market.markAdded}
-          onAdd={add}
-        />
-      )}
     </div>
-  )
-}
-
-function AddButton({
-  state,
-  onAdd,
-  disabled,
-  size,
-  className,
-}: {
-  state: AddState
-  onAdd: () => void
-  disabled?: boolean
-  size?: 'sm' | 'default'
-  className?: string
-}) {
-  if (state.status === 'added') {
-    return (
-      <Button asChild variant="secondary" size={size} className={className}>
-        <Link to="/books/$bookId" params={{ bookId: state.bookId }}>
-          <Check />
-          In library
-        </Link>
-      </Button>
-    )
-  }
-  const adding = state.status === 'adding'
-  return (
-    <Button
-      variant={size === 'sm' ? 'outline' : 'default'}
-      size={size}
-      className={className}
-      disabled={adding || disabled}
-      onClick={onAdd}
-    >
-      {adding ? <Loader2 className="animate-spin" /> : <Plus />}
-      {adding ? 'Adding…' : 'Add to library'}
-    </Button>
-  )
-}
-
-type OfferDetails = {
-  source: number
-  sourceName: string
-  id: string
-  book: BookDetails | null
-  error: string | null
-}
-
-// Loads the book's details from every source that has it when opened. Shows
-// the first source's details and every source's formats.
-function BookDialog({
-  book,
-  multiSource,
-  onClose,
-  state,
-  onInLibrary,
-  onAdd,
-}: {
-  book: MergedBook
-  multiSource: boolean
-  onClose: () => void
-  state: AddState
-  onInLibrary: (offer: SourceRef, bookId: string) => void
-  onAdd: (offer: SourceRef & { formatId: string }) => void
-}) {
-  const [offers, setOffers] = useState<OfferDetails[] | null>(null)
-  const [choice, setChoice] = useState<string>()
-  // Reload only when the offers change, not on every merge of the list.
-  const offersKey = book.offers.map((o) => `${o.source}:${o.id}`).join(' ')
-
-  useEffect(() => {
-    let current = true
-    void Promise.all(
-      book.offers.map(async (offer) => {
-        try {
-          const result = await marketBook({
-            data: { sourceId: offer.source, bookId: offer.id },
-          })
-          if (result.libraryBookId && current) {
-            onInLibrary(offer, result.libraryBookId)
-          }
-          return { ...offer, book: result.book, error: null }
-        } catch (err) {
-          return { ...offer, book: null, error: message(err) }
-        }
-      }),
-    ).then((loaded) => {
-      if (!current) return
-      setOffers(loaded)
-      const first = loaded.find((o) => o.book?.formats.length)
-      // Keep the user's choice when the offers change, if it still exists.
-      setChoice((prev) =>
-        loaded.some((o) =>
-          o.book?.formats.some((f) => `${o.source}:${o.id}|${f.id}` === prev),
-        )
-          ? prev
-          : first && `${first.source}:${first.id}|${first.book!.formats[0].id}`,
-      )
-    })
-    return () => {
-      current = false
-    }
-    // onInLibrary is a fresh closure each render.
-    // oxlint-disable-next-line react-hooks/exhaustive-deps
-  }, [offersKey])
-
-  const details = offers?.find((o) => o.book)?.book
-  const shown = details ?? book
-  const formats = (offers ?? []).flatMap((o) =>
-    (o.book?.formats ?? []).map((f) => ({
-      ...f,
-      key: `${o.source}:${o.id}|${f.id}`,
-      offer: o,
-      text: [
-        multiSource && o.sourceName,
-        book.offers.length > 1 && o.book?.publisher,
-        book.offers.length > 1 && o.book?.publishedDate,
-        book.offers.length > 1 && o.book?.rating && `★ ${o.book.rating}`,
-        f.label,
-        formatSize(f.size),
-      ]
-        .filter(Boolean)
-        .join(' · '),
-    })),
-  )
-  const format = formats.find((f) => f.key === choice)
-  const added = state.status === 'added'
-  const description = offers?.map((o) => o.book?.description).find(Boolean)
-  const shelves = (offers ?? []).flatMap((o) =>
-    (o.book?.shelves ?? []).map((s) => ({ ...s, source: o.source })),
-  )
-
-  return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-        <div className="grid gap-6 sm:grid-cols-[180px_1fr]">
-          <BookCover
-            title={shown.title}
-            authors={shown.authors}
-            coverUrl={book.coverUrl ?? shown.coverUrl}
-            className="mx-auto w-40 sm:w-full"
-          />
-          <div className="flex min-w-0 flex-col gap-4">
-            <div className="grid gap-1 pr-6">
-              <DialogTitle className="text-xl leading-tight">
-                {shown.title}
-              </DialogTitle>
-              <DialogDescription>{shown.authors.join(', ')}</DialogDescription>
-            </div>
-
-            {!offers && (
-              <Loader2 className="size-5 animate-spin text-muted-foreground" />
-            )}
-            {offers
-              ?.filter((o) => o.error)
-              .map((o) => (
-                <p
-                  key={`${o.source}:${o.id}`}
-                  className="text-sm text-destructive"
-                >
-                  Could not load {o.sourceName}: {o.error}
-                </p>
-              ))}
-
-            {offers && formats.length === 0 && !added && (
-              <p className="text-sm text-muted-foreground">No EPUB available</p>
-            )}
-            {offers && (formats.length > 0 || added) && (
-              <>
-                {formats.length > 1 && !added && (
-                  <Select value={choice} onValueChange={setChoice}>
-                    <SelectTrigger aria-label="Format" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {formats.map((f) => (
-                        <SelectItem key={f.key} value={f.key}>
-                          {f.text}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-                <div className="flex flex-wrap items-center gap-3">
-                  <AddButton
-                    state={state}
-                    disabled={!format}
-                    onAdd={() =>
-                      format &&
-                      onAdd({
-                        source: format.offer.source,
-                        id: format.offer.id,
-                        formatId: format.id,
-                      })
-                    }
-                  />
-                  {formats.length === 1 && !added && (
-                    <span className="text-sm text-muted-foreground">
-                      {formats[0].text}
-                    </span>
-                  )}
-                </div>
-              </>
-            )}
-            {state.status === 'error' && (
-              <p className="text-sm text-destructive">{state.message}</p>
-            )}
-
-            {description && (
-              <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
-                {description}
-              </p>
-            )}
-
-            {shelves.length > 0 && (
-              <ul className="flex flex-wrap gap-2">
-                {shelves.map((shelf) => (
-                  <li key={`${shelf.source}:${shelf.id}`}>
-                    <Link
-                      to="/market"
-                      search={{
-                        shelf: [{ source: shelf.source, id: shelf.id }],
-                      }}
-                      onClick={onClose}
-                      className="block rounded-full border px-3 py-1 text-xs transition-colors hover:bg-accent"
-                    >
-                      {shelf.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
   )
 }

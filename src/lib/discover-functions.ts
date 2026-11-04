@@ -84,6 +84,37 @@ async function soft<T>(what: string, load: () => Promise<T>) {
   }
 }
 
+// Hardcover's take on a book: rating, tags, other books by the author and
+// similar books. `self` is the library copy, left out of "More by".
+async function discover(
+  book: { title: string; authors: string[]; isbn: string | null },
+  matchedId?: string,
+  self?: string,
+) {
+  const id = await findHardcoverBook(book, matchedId)
+  const details = id ? await hardcoverBookDetails(id) : null
+  if (!id || !details) return null
+  // Hardcover's spelling of the name, so the author search finds it.
+  const authorName = details.author ?? book.authors[0]
+  const author = authorName
+    ? await hardcoverAuthor(authorName).catch(() => null)
+    : null
+  const link = libraryIndex()
+  return {
+    ...details,
+    similar: details.similar.map(link),
+    // Other books by the author, in the library or not, most read first.
+    moreByAuthor: author && {
+      name: author.name,
+      books: author.books
+        .filter((b) => b.id !== id)
+        .map(link)
+        .filter((b) => !self || b.libraryId !== self)
+        .slice(0, 12),
+    },
+  }
+}
+
 export const discoverBook = createServerFn({ method: 'GET' })
   .validator((bookId: string) => name(bookId))
   .handler(async ({ data: bookId }) => {
@@ -91,34 +122,30 @@ export const discoverBook = createServerFn({ method: 'GET' })
     return soft('book', async () => {
       const row = db.select().from(books).where(eq(books.id, bookId)).get()
       if (!row) return null
-      const book = bookView(row)
       const source = row.matched?.source
-      const id = await findHardcoverBook(
-        book,
+      return discover(
+        bookView(row),
         source?.provider === 'hardcover' ? source.id : undefined,
+        bookId,
       )
-      const details = id ? await hardcoverBookDetails(id) : null
-      if (!id || !details) return null
-      // Hardcover's spelling of the name, so the author search finds it.
-      const authorName = details.author ?? book.authors[0]
-      const author = authorName
-        ? await hardcoverAuthor(authorName).catch(() => null)
-        : null
-      const link = libraryIndex()
-      return {
-        ...details,
-        similar: details.similar.map(link),
-        // Other books by the author, in the library or not, most read first.
-        moreByAuthor: author && {
-          name: author.name,
-          books: author.books
-            .filter((b) => b.id !== id)
-            .map(link)
-            .filter((b) => b.libraryId !== bookId)
-            .slice(0, 12),
-        },
-      }
     })
+  })
+
+// The same for a book that isn't in the library, such as a Market listing.
+export const discoverWork = createServerFn({ method: 'GET' })
+  .validator(
+    (data: { title: string; authors: string[]; isbn: string | null }) => ({
+      title: name(data.title),
+      authors: (Array.isArray(data.authors) ? data.authors : [])
+        .map(name)
+        .filter(Boolean)
+        .slice(0, 10),
+      isbn: name(data.isbn) || null,
+    }),
+  )
+  .handler(async ({ data }) => {
+    await requireSession()
+    return soft('work', async () => (data.title ? discover(data) : null))
   })
 
 export const discoverAuthor = createServerFn({ method: 'GET' })
