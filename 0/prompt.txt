@@ -1,0 +1,9 @@
+It's a bit awkward that there is no loading state for this metadata and it all just pops in? Causes some annoying layout shift
+
+---
+
+Can we also spice up the market page with hardcover stuff? We should also be able to see author and related books on market listings. I also think we should move those to being a page instead of a modal.
+
+---
+
+Have a Task subagent review all changes since merge base 1e0eab8faedd03c6767f5f39eb27dde6a0d0ee31, including untracked files and report its findings.
