@@ -1,0 +1,19 @@
+Portal page review comment from harris on https://t-03h6sky6cs564iooebypzh5d9-p20354.onamp.dev/books/e1c6977d-8a17-418c-9d7f-7f2ecdf6459e:
+
+[1] We could probably format this description text in a better way. You had a prototype before that was nice and book-y
+
+[1] Element: html > body > div.min-h-screen:nth-of-type(1) > main.mx-auto.grid > div.min-w-0 > p.mt-8.max-w-prose:nth-of-type(2)
+    Element text: "#1 NEW YORK TIMES BESTSELLER • “Prepare to be entranced by this addictively readable oral history of the great war between humans and zombies.”—Entertainment Weekly We survived the zombie apocalypse, …"
+    Source: <Book>
+Viewport: 1504×848
+
+---
+
+Portal page review comment from harris on https://t-03h6sky6cs564iooebypzh5d9-p20354.onamp.dev/books/e1c6977d-8a17-418c-9d7f-7f2ecdf6459e:
+
+[1] We could probably format this description text in a better way. You had a prototype before that was nice and book-y
+
+[1] Element: html > body > div.min-h-screen:nth-of-type(1) > main.mx-auto.grid > div.min-w-0 > p.mt-8.max-w-prose:nth-of-type(2)
+    Element text: "#1 NEW YORK TIMES BESTSELLER • “Prepare to be entranced by this addictively readable oral history of the great war between humans and zombies.”—Entertainment Weekly We survived the zombie apocalypse, …"
+    Source: <Book>
+Viewport: 1504×848
