@@ -16,12 +16,12 @@ function hue(text: string) {
   return h
 }
 
-// The cover image, or a tinted block with the title for books without one
-// (or whose image fails to load).
+// The cover image, or a cloth-bound placeholder with the title for books
+// without one (or whose image fails to load).
 export function BookCover({ title, authors, coverUrl, className }: Props) {
   const [failed, setFailed] = useState<string | null>(null)
   const base = cn(
-    'aspect-[2/3] w-full overflow-hidden rounded-md shadow-sm ring-1 ring-black/5',
+    'aspect-[2/3] w-full overflow-hidden rounded-sm shadow-sm ring-1 ring-black/5',
     className,
   )
   if (coverUrl && failed !== coverUrl) {
@@ -38,23 +38,25 @@ export function BookCover({ title, authors, coverUrl, className }: Props) {
   const h = hue(title)
   return (
     <div
-      className={cn(
-        base,
-        '@container flex flex-col justify-between p-3 text-left',
-      )}
-      style={{
-        backgroundColor: `oklch(0.9 0.05 ${h})`,
-        color: `oklch(0.32 0.07 ${h})`,
-      }}
+      className={cn(base, '@container p-[7%]')}
+      style={{ backgroundColor: `oklch(0.4 0.06 ${h})` }}
     >
-      <span className="line-clamp-5 text-sm leading-snug font-semibold text-balance @[12rem]:text-xl">
-        {title}
-      </span>
-      {authors[0] && (
-        <span className="line-clamp-2 text-xs opacity-80 @[12rem]:text-sm">
-          {authors[0]}
+      <div
+        className="flex h-full flex-col items-center justify-center gap-2 border p-[10%] text-center font-serif"
+        style={{
+          borderColor: 'oklch(0.8 0.08 85 / 0.6)',
+          color: 'oklch(0.92 0.05 85)',
+        }}
+      >
+        <span className="line-clamp-5 text-sm leading-snug font-semibold text-balance hyphens-auto @[12rem]:text-xl">
+          {title}
         </span>
-      )}
+        {authors[0] && (
+          <span className="line-clamp-2 text-xs opacity-75 @[12rem]:text-sm">
+            {authors[0]}
+          </span>
+        )}
+      </div>
     </div>
   )
 }

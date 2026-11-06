@@ -50,10 +50,10 @@ function AppShell() {
     <div className="min-h-screen">
       <header className="border-b">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-8 px-4">
-          <Link to="/" className="font-semibold">
+          <Link to="/" className="font-serif text-lg font-semibold">
             Bookserve
           </Link>
-          <nav className="flex items-center gap-6 text-sm">
+          <nav className="flex items-center gap-1 text-sm">
             {navItems
               .filter((item) => !('admin' in item) || user.role === 'admin')
               .map((item) => (
@@ -66,7 +66,7 @@ function AppShell() {
                       ? true
                       : undefined
                   }
-                  className="text-muted-foreground transition-colors hover:text-foreground data-[also-active]:font-medium data-[also-active]:text-foreground data-[status=active]:font-medium data-[status=active]:text-foreground"
+                  className="rounded-md px-2.5 py-1 text-muted-foreground transition-colors hover:text-foreground data-[also-active]:bg-accent data-[also-active]:text-foreground data-[status=active]:bg-accent data-[status=active]:text-foreground"
                 >
                   {item.label}
                 </Link>

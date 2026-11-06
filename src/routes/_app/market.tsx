@@ -365,7 +365,9 @@ function ListingView({ market }: { market: Market }) {
           Market
         </Link>
         <ChevronRight className="size-4 shrink-0" />
-        <h2 className="truncate font-medium text-foreground">{title}</h2>
+        <h2 className="truncate font-sans font-medium text-foreground">
+          {title}
+        </h2>
       </nav>
 
       {shelves.length > 0 && <ShelfGrid shelves={shelves} />}
