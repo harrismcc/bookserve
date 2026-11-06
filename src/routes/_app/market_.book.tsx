@@ -4,6 +4,7 @@ import { Link, createFileRoute, redirect } from '@tanstack/react-router'
 import type { AddState } from '#/components/add-to-library-button'
 import { AddToLibraryButton } from '#/components/add-to-library-button'
 import { BookCover } from '#/components/book-cover'
+import { BookDescription } from '#/components/book-description'
 import { HardcoverRows, HardcoverTags } from '#/components/discover-row'
 import { Badge } from '#/components/ui/badge'
 import { Skeleton } from '#/components/ui/skeleton'
@@ -267,11 +268,7 @@ function MarketBook() {
           )}
         </div>
 
-        {description && (
-          <p className="mt-8 max-w-prose text-sm leading-relaxed whitespace-pre-line">
-            {description}
-          </p>
-        )}
+        {description && <BookDescription text={description} className="mt-8" />}
         {facts.length > 0 && (
           <dl className="mt-8 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
             {facts.map(([name, value]) => (

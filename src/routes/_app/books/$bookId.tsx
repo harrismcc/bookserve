@@ -8,6 +8,7 @@ import {
 import { Download, RotateCcw, SearchCheck, Trash2 } from 'lucide-react'
 
 import { BookCover } from '#/components/book-cover'
+import { BookDescription } from '#/components/book-description'
 import { HardcoverRows, HardcoverTags } from '#/components/discover-row'
 import { MatchDialog } from '#/components/match-dialog'
 import {
@@ -124,9 +125,7 @@ function Book() {
           {user.role === 'admin' && <AdminActions book={book} />}
         </div>
         {book.description && (
-          <p className="mt-8 max-w-prose text-sm leading-relaxed whitespace-pre-line">
-            {book.description}
-          </p>
+          <BookDescription text={book.description} className="mt-8" />
         )}
         {details.length > 0 && (
           <dl className="mt-8 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
