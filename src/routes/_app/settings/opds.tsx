@@ -43,7 +43,12 @@ function OpdsServer() {
         )}
       >
         <dt className="text-muted-foreground">
-          <label htmlFor="opds-url">Catalog URL</label>
+          <Label
+            htmlFor="opds-url"
+            className="font-normal text-muted-foreground"
+          >
+            Catalog URL
+          </Label>
         </dt>
         <dd>
           <CopyField id="opds-url" value={url} />

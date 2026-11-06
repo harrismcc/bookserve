@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from '@tanstack/react-router'
-import { ArrowLeft, Loader2, Search } from 'lucide-react'
+import { ArrowLeft, Search } from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
 import { Checkbox } from '#/components/ui/checkbox'
@@ -12,6 +12,13 @@ import {
   DialogTitle,
 } from '#/components/ui/dialog'
 import { Input } from '#/components/ui/input'
+import {
+  Item,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from '#/components/ui/item'
 import { Label } from '#/components/ui/label'
 import {
   Select,
@@ -20,6 +27,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '#/components/ui/select'
+import { Spinner } from '#/components/ui/spinner'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '#/components/ui/table'
 import type { getBook } from '#/lib/book-functions'
 import {
   applyMatch,
@@ -169,7 +185,7 @@ function MatchFlow({ book, onDone }: { book: Book; onDone: () => void }) {
             </Select>
           </div>
           <Button type="submit" disabled={pending}>
-            {pending ? <Loader2 className="animate-spin" /> : <Search />}
+            {pending ? <Spinner /> : <Search />}
             Search
           </Button>
         </div>
@@ -187,7 +203,7 @@ function MatchFlow({ book, onDone }: { book: Book; onDone: () => void }) {
                 key={p}
                 className="flex items-center gap-2 py-1 text-sm text-muted-foreground"
               >
-                <Loader2 className="size-4 animate-spin" />
+                <Spinner className="size-4" />
                 {providerName(p)}
               </p>
             ) : null,
@@ -198,24 +214,33 @@ function MatchFlow({ book, onDone }: { book: Book; onDone: () => void }) {
           <ul className="grid gap-1 py-1" aria-label="Results">
             {candidates.map((c) => (
               <li key={`${c.provider}:${c.id}`}>
-                <button
-                  type="button"
-                  onClick={() => setPicked(c)}
-                  className="flex w-full items-center gap-3 rounded-md p-2 text-left hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+                <Item
+                  asChild
+                  size="sm"
+                  className="w-full flex-nowrap p-2 text-left hover:bg-accent"
                 >
-                  <Thumb url={c.thumbnailUrl} className="w-10" />
-                  <span className="min-w-0 flex-1">
-                    <span className="line-clamp-1 font-medium">{c.title}</span>
-                    <span className="line-clamp-1 text-sm text-muted-foreground">
-                      {c.authors.join(', ')}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {[c.publishedDate?.slice(0, 4), providerName(c.provider)]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </span>
-                  </span>
-                </button>
+                  <button type="button" onClick={() => setPicked(c)}>
+                    <ItemMedia>
+                      <Thumb url={c.thumbnailUrl} className="w-10" />
+                    </ItemMedia>
+                    <ItemContent className="min-w-0">
+                      <ItemTitle className="line-clamp-1 block text-base">
+                        {c.title}
+                      </ItemTitle>
+                      <ItemDescription className="line-clamp-1">
+                        {c.authors.join(', ')}
+                      </ItemDescription>
+                      <ItemDescription className="text-xs">
+                        {[
+                          c.publishedDate?.slice(0, 4),
+                          providerName(c.provider),
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </ItemDescription>
+                    </ItemContent>
+                  </button>
+                </Item>
               </li>
             ))}
           </ul>
@@ -373,19 +398,22 @@ function Compare({
         </span>
       </div>
       <div className="-mx-6 min-h-0 overflow-y-auto border-y px-6">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-muted-foreground">
-              <th className="w-8 py-2" />
-              <th className="py-2 pr-4 font-medium">Field</th>
-              <th className="w-[40%] py-2 pr-4 font-medium">Current</th>
-              <th className="w-[40%] py-2 font-medium">New</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="w-8" />
+              <TableHead className="pr-4">Field</TableHead>
+              <TableHead className="w-[40%] pr-4">Current</TableHead>
+              <TableHead className="w-[40%]">New</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {rows.map((row) => (
-              <tr key={row.key} className="border-t align-top">
-                <td className="py-2">
+              <TableRow
+                key={row.key}
+                className="align-top hover:bg-transparent"
+              >
+                <TableCell>
                   <Checkbox
                     id={`match-${row.key}`}
                     checked={row.on}
@@ -394,37 +422,39 @@ function Compare({
                       setChecked({ ...checked, [row.key]: value === true })
                     }
                   />
-                </td>
-                <td className="py-2 pr-4">
-                  <label htmlFor={`match-${row.key}`}>{row.label}</label>
-                </td>
+                </TableCell>
+                <TableCell className="whitespace-normal pr-4">
+                  <Label htmlFor={`match-${row.key}`} className="font-normal">
+                    {row.label}
+                  </Label>
+                </TableCell>
                 {row.key === 'cover' ? (
                   <>
-                    <td className="py-2 pr-4">
+                    <TableCell className="whitespace-normal pr-4">
                       <Thumb url={row.current || null} className="w-16" />
-                    </td>
-                    <td className="py-2">
+                    </TableCell>
+                    <TableCell className="whitespace-normal">
                       <Thumb url={row.next || null} className="w-16" />
-                    </td>
+                    </TableCell>
                   </>
                 ) : (
                   <>
-                    <td className="py-2 pr-4 text-muted-foreground">
+                    <TableCell className="whitespace-normal pr-4 text-muted-foreground">
                       <Value text={row.current} />
-                    </td>
-                    <td className="py-2">
+                    </TableCell>
+                    <TableCell className="whitespace-normal">
                       {row.waiting ? (
-                        <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                        <Spinner className="size-4 text-muted-foreground" />
                       ) : (
                         <Value text={row.next} />
                       )}
-                    </td>
+                    </TableCell>
                   </>
                 )}
-              </tr>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
       <div className="grid gap-2">
         {error && <p className="text-sm text-destructive">{error}</p>}
@@ -433,7 +463,7 @@ function Compare({
             onClick={apply}
             disabled={pending || loading || !rows.some((r) => r.on)}
           >
-            {pending && <Loader2 className="animate-spin" />}
+            {pending && <Spinner />}
             Apply
           </Button>
         </DialogFooter>

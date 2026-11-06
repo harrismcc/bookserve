@@ -3,6 +3,7 @@ import { ExternalLink } from 'lucide-react'
 
 import { BookGrid } from '#/components/book-grid'
 import { DiscoverRow, DiscoverRowSkeleton } from '#/components/discover-row'
+import { Skeleton } from '#/components/ui/skeleton'
 import { useDeferred } from '#/hooks/use-deferred'
 import { discoverAuthor, getAuthorBooks } from '#/lib/discover-functions'
 
@@ -26,13 +27,13 @@ function Author() {
     <main className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="text-2xl font-semibold">{name}</h1>
       {loading && (
-        <div className="mt-2 max-w-prose animate-pulse" aria-hidden>
+        <div className="mt-2 max-w-prose" aria-hidden>
           <div className="h-5 py-1">
-            <div className="h-full w-32 rounded bg-muted" />
+            <Skeleton className="h-full w-32" />
           </div>
           <div className="mt-3 grid gap-2 py-0.5">
             {['100%', '95%', '98%', '60%'].map((width, i) => (
-              <div key={i} className="h-4 rounded bg-muted" style={{ width }} />
+              <Skeleton key={i} className="h-4" style={{ width }} />
             ))}
           </div>
         </div>

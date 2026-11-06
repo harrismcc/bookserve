@@ -1,7 +1,8 @@
 import { Link } from '@tanstack/react-router'
-import { Check, Loader2, Plus } from 'lucide-react'
+import { Check, Plus } from 'lucide-react'
 
 import { Button } from '#/components/ui/button'
+import { Spinner } from '#/components/ui/spinner'
 
 export type AddState =
   | { status: 'idle' | 'adding' }
@@ -41,7 +42,7 @@ export function AddToLibraryButton({
       disabled={adding || disabled}
       onClick={onAdd}
     >
-      {adding ? <Loader2 className="animate-spin" /> : <Plus />}
+      {adding ? <Spinner /> : <Plus />}
       {adding ? 'Adding…' : 'Add to library'}
     </Button>
   )

@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-router'
 import { LogOut } from 'lucide-react'
 
+import { Avatar, AvatarFallback } from '#/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -77,9 +78,13 @@ function AppShell() {
             <DropdownMenuTrigger asChild>
               <button
                 aria-label="Account"
-                className="ml-auto grid size-9 place-items-center rounded-full bg-primary font-medium text-primary-foreground uppercase outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                className="ml-auto rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
-                {user.username[0]}
+                <Avatar size="lg">
+                  <AvatarFallback className="bg-primary font-medium text-primary-foreground uppercase">
+                    {user.username[0]}
+                  </AvatarFallback>
+                </Avatar>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-44">

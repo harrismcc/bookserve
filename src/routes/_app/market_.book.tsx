@@ -5,6 +5,8 @@ import type { AddState } from '#/components/add-to-library-button'
 import { AddToLibraryButton } from '#/components/add-to-library-button'
 import { BookCover } from '#/components/book-cover'
 import { HardcoverRows, HardcoverTags } from '#/components/discover-row'
+import { Badge } from '#/components/ui/badge'
+import { Skeleton } from '#/components/ui/skeleton'
 import {
   Select,
   SelectContent,
@@ -86,10 +88,10 @@ const LAYOUT =
 function Pending() {
   return (
     <main className={LAYOUT} aria-busy>
-      <div className="mx-auto aspect-[2/3] w-full max-w-56 animate-pulse rounded-cover bg-muted sm:max-w-none" />
+      <Skeleton className="mx-auto aspect-[2/3] w-full max-w-56 rounded-cover sm:max-w-none" />
       <div className="grid content-start gap-3 py-1">
-        <div className="h-6 w-2/3 animate-pulse rounded bg-muted" />
-        <div className="h-5 w-1/3 animate-pulse rounded bg-muted" />
+        <Skeleton className="h-6 w-2/3" />
+        <Skeleton className="h-5 w-1/3" />
       </div>
     </main>
   )
@@ -284,13 +286,18 @@ function MarketBook() {
           <ul className="mt-8 flex flex-wrap gap-2">
             {shelves.map((shelf) => (
               <li key={`${shelf.source}:${shelf.id}`}>
-                <Link
-                  to="/market"
-                  search={{ shelf: [{ source: shelf.source, id: shelf.id }] }}
-                  className="block rounded-full border px-3 py-1 text-xs transition-colors hover:bg-accent"
+                <Badge
+                  asChild
+                  variant="outline"
+                  className="px-3 py-1 font-normal"
                 >
-                  {shelf.title}
-                </Link>
+                  <Link
+                    to="/market"
+                    search={{ shelf: [{ source: shelf.source, id: shelf.id }] }}
+                  >
+                    {shelf.title}
+                  </Link>
+                </Badge>
               </li>
             ))}
           </ul>

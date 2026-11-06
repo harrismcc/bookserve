@@ -5,13 +5,32 @@ import {
   redirect,
   useNavigate,
 } from '@tanstack/react-router'
-import { ChevronRight, Loader2, Search, Store } from 'lucide-react'
+import { ChevronRight, Search, Store } from 'lucide-react'
 
 import { AddToLibraryButton } from '#/components/add-to-library-button'
 import type { AddState } from '#/components/add-to-library-button'
 import { BookCover } from '#/components/book-cover'
 import { Button } from '#/components/ui/button'
-import { Input } from '#/components/ui/input'
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyContent,
+} from '#/components/ui/empty'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '#/components/ui/input-group'
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemTitle,
+} from '#/components/ui/item'
+import { Spinner } from '#/components/ui/spinner'
 import {
   listMarketSources,
   marketAdd,
@@ -238,13 +257,19 @@ function Market() {
     return (
       <main className="mx-auto max-w-6xl px-4 py-8">
         <h1 className="text-2xl font-semibold">Market</h1>
-        <div className="mt-6 flex min-h-72 flex-col items-center justify-center gap-3 rounded-lg border border-dashed text-muted-foreground">
-          <Store className="size-8" />
-          <p className="text-sm">No sources</p>
-          <Button asChild variant="outline" size="sm">
-            <Link to="/settings/market">Add a source</Link>
-          </Button>
-        </div>
+        <Empty className="mt-6 min-h-72 border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Store />
+            </EmptyMedia>
+            <EmptyTitle>No sources</EmptyTitle>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/settings/market">Add a source</Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       </main>
     )
   }
@@ -258,25 +283,31 @@ function Market() {
       {sources.some((s) => s.searchable) && (
         <form
           key={search.q}
-          className="relative mt-6"
+          className="mt-6"
           onSubmit={(e) => {
             e.preventDefault()
             const q = String(new FormData(e.currentTarget).get('q')).trim()
             void navigate({ search: { q: q || undefined } })
           }}
         >
-          <Search className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            name="q"
-            placeholder="Search"
-            aria-label="Search the Market"
-            defaultValue={search.q}
-            className="h-12 rounded-full pl-12 text-base md:text-base"
-          />
-          {loading && (
-            <Loader2 className="absolute top-1/2 right-4 size-5 -translate-y-1/2 animate-spin text-muted-foreground" />
-          )}
+          <InputGroup className="h-12 rounded-full">
+            <InputGroupAddon className="pl-4 [&>svg]:size-5">
+              <Search />
+            </InputGroupAddon>
+            <InputGroupInput
+              type="search"
+              name="q"
+              placeholder="Search"
+              aria-label="Search the Market"
+              defaultValue={search.q}
+              className="text-base md:text-base"
+            />
+            {loading && (
+              <InputGroupAddon align="inline-end" className="pr-4">
+                <Spinner className="size-5" />
+              </InputGroupAddon>
+            )}
+          </InputGroup>
         </form>
       )}
 
@@ -303,7 +334,7 @@ function Market() {
 function Loading() {
   return (
     <div className="flex min-h-48 items-center justify-center text-muted-foreground">
-      <Loader2 className="size-6 animate-spin" />
+      <Spinner className="size-6" />
     </div>
   )
 }
@@ -374,10 +405,14 @@ function ListingView({ market }: { market: Market }) {
 
       {empty && loading && <Loading />}
       {empty && !loading && (
-        <div className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-lg border border-dashed text-muted-foreground">
-          <Search className="size-8" />
-          <p className="text-sm">Nothing found</p>
-        </div>
+        <Empty className="min-h-48 border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Search />
+            </EmptyMedia>
+            <EmptyTitle>Nothing found</EmptyTitle>
+          </EmptyHeader>
+        </Empty>
       )}
 
       {books.length > 0 && (
@@ -397,7 +432,7 @@ function ListingView({ market }: { market: Market }) {
             onClick={market.loadMore}
             disabled={loading}
           >
-            {loading && <Loader2 className="animate-spin" />}
+            {loading && <Spinner />}
             {loading ? 'Loading…' : 'Load more'}
           </Button>
         </div>
@@ -411,21 +446,25 @@ function ShelfGrid({ shelves }: { shelves: MergedShelf[] }) {
     <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {shelves.map((shelf) => (
         <li key={shelf.refs.map((r) => `${r.source}:${r.id}`).join(' ')}>
-          <Link
-            to="/market"
-            search={{ shelf: shelf.refs }}
-            className="group flex h-full items-center gap-3 rounded-xl border bg-card px-4 py-3.5 transition-colors hover:bg-accent"
+          <Item
+            asChild
+            variant="outline"
+            className="h-full flex-nowrap bg-card"
           >
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-medium">{shelf.title}</p>
-              {shelf.description && (
-                <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
-                  {shelf.description}
-                </p>
-              )}
-            </div>
-            <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-          </Link>
+            <Link to="/market" search={{ shelf: shelf.refs }}>
+              <ItemContent className="min-w-0">
+                <ItemTitle className="block w-full truncate text-base">
+                  {shelf.title}
+                </ItemTitle>
+                {shelf.description && (
+                  <ItemDescription>{shelf.description}</ItemDescription>
+                )}
+              </ItemContent>
+              <ItemActions>
+                <ChevronRight className="size-4 text-muted-foreground transition-transform group-hover/item:translate-x-0.5" />
+              </ItemActions>
+            </Link>
+          </Item>
         </li>
       ))}
     </ul>

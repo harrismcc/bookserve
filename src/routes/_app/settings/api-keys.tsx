@@ -19,6 +19,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '#/components/ui/dialog'
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '#/components/ui/empty'
 import { Input } from '#/components/ui/input'
 import { Label } from '#/components/ui/label'
 import {
@@ -58,10 +64,14 @@ function ApiKeys() {
         <Button onClick={() => setCreating(true)}>Create key</Button>
       </div>
       {keys.length === 0 ? (
-        <div className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-lg border border-dashed text-muted-foreground">
-          <KeyRound className="size-8" />
-          <p className="text-sm">No API keys</p>
-        </div>
+        <Empty className="min-h-48 border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <KeyRound />
+            </EmptyMedia>
+            <EmptyTitle>No API keys</EmptyTitle>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <div className="rounded-lg border">
           <Table>

@@ -22,6 +22,7 @@ import {
   AlertDialogTrigger,
 } from '#/components/ui/alert-dialog'
 import { Button } from '#/components/ui/button'
+import { Progress } from '#/components/ui/progress'
 import { useDeferred } from '#/hooks/use-deferred'
 import { getBook, removeBook } from '#/lib/book-functions'
 import { discoverBook } from '#/lib/discover-functions'
@@ -103,12 +104,10 @@ function Book() {
                 {book.progress.device} · {book.progress.updatedAt.slice(0, 10)}
               </span>
             </div>
-            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-primary"
-                style={{ width: `${book.progress.percentage * 100}%` }}
-              />
-            </div>
+            <Progress
+              value={book.progress.percentage * 100}
+              className="mt-1.5 h-1.5"
+            />
           </div>
         )}
         <div className="mt-6 flex flex-wrap gap-3">

@@ -1,8 +1,12 @@
 import { useRef, useState } from 'react'
 import { Check, Copy } from 'lucide-react'
 
-import { Button } from '#/components/ui/button'
-import { Input } from '#/components/ui/input'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '#/components/ui/input-group'
 
 export function CopyField({ id, value }: { id: string; value: string }) {
   const input = useRef<HTMLInputElement>(null)
@@ -18,8 +22,8 @@ export function CopyField({ id, value }: { id: string; value: string }) {
   }
 
   return (
-    <div className="flex gap-2">
-      <Input
+    <InputGroup>
+      <InputGroupInput
         ref={input}
         id={id}
         value={value}
@@ -27,9 +31,11 @@ export function CopyField({ id, value }: { id: string; value: string }) {
         onFocus={(event) => event.currentTarget.select()}
         className="font-mono"
       />
-      <Button variant="outline" size="icon" aria-label="Copy" onClick={copy}>
-        {copied ? <Check /> : <Copy />}
-      </Button>
-    </div>
+      <InputGroupAddon align="inline-end">
+        <InputGroupButton size="icon-xs" aria-label="Copy" onClick={copy}>
+          {copied ? <Check /> : <Copy />}
+        </InputGroupButton>
+      </InputGroupAddon>
+    </InputGroup>
   )
 }

@@ -2,6 +2,8 @@ import { Link } from '@tanstack/react-router'
 import { Check, Star } from 'lucide-react'
 
 import { BookCover } from '#/components/book-cover'
+import { Badge } from '#/components/ui/badge'
+import { Skeleton } from '#/components/ui/skeleton'
 import type { DiscoverBook, discoverWork } from '#/lib/discover-functions'
 import { cn } from '#/lib/utils'
 
@@ -46,19 +48,19 @@ const itemClass = (grid?: boolean) =>
 // Holds a row's space while Hardcover loads.
 export function DiscoverRowSkeleton({ grid }: { grid?: boolean }) {
   return (
-    <section className="min-w-0 animate-pulse" aria-hidden>
+    <section className="min-w-0" aria-hidden>
       <div className="mb-3 flex h-7 items-center">
-        <div className="h-4 w-40 rounded bg-muted" />
+        <Skeleton className="h-4 w-40" />
       </div>
       <ul className={cn(listClass(grid), 'overflow-hidden')}>
         {Array.from({ length: 6 }, (_, i) => (
           <li key={i} className={itemClass(grid)}>
-            <div className="aspect-[2/3] w-full rounded-cover bg-muted" />
+            <Skeleton className="aspect-[2/3] w-full rounded-cover" />
             <div className="mt-2 h-5 py-1">
-              <div className="h-full w-4/5 rounded bg-muted" />
+              <Skeleton className="h-full w-4/5" />
             </div>
             <div className="mt-0.5 h-4 py-0.5">
-              <div className="h-full w-1/2 rounded bg-muted" />
+              <Skeleton className="h-full w-1/2" />
             </div>
           </li>
         ))}
@@ -84,13 +86,13 @@ function DiscoverCard<T extends DiscoverBook>({
           className="transition-shadow group-hover:shadow-md"
         />
         {book.libraryId && (
-          <span
+          <Badge
             title="In your library"
-            className="absolute top-1.5 right-1.5 flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow ring-2 ring-background"
+            className="absolute top-1.5 right-1.5 size-6 p-0 shadow ring-2 ring-background [&>svg]:size-3.5"
           >
-            <Check className="size-3.5" strokeWidth={3} />
+            <Check strokeWidth={3} />
             <span className="sr-only">In your library</span>
-          </span>
+          </Badge>
         )}
       </div>
       <p className="mt-2 line-clamp-2 text-sm leading-snug font-medium">
@@ -143,12 +145,12 @@ export function HardcoverTags({
 }) {
   if (loading) {
     return (
-      <div className="mt-3 flex h-6 animate-pulse items-center gap-2">
-        <div className="h-4 w-28 rounded bg-muted" />
+      <div className="mt-3 flex h-6 items-center gap-2">
+        <Skeleton className="h-4 w-28" />
         {[14, 16, 12, 18, 20].map((w) => (
-          <div
+          <Skeleton
             key={w}
-            className="h-5 rounded-full bg-muted"
+            className="h-5 rounded-full"
             style={{ width: `${w * 0.25}rem` }}
           />
         ))}
@@ -170,9 +172,9 @@ export function HardcoverTags({
         </a>
       )}
       {[...discovery.genres, ...discovery.moods].map((tag) => (
-        <span key={tag} className="rounded-full border px-2 py-0.5 text-xs">
+        <Badge key={tag} variant="outline" className="font-normal">
           {tag}
-        </span>
+        </Badge>
       ))}
     </div>
   )

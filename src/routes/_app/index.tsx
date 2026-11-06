@@ -4,6 +4,12 @@ import { BookOpen, RefreshCw, Upload } from 'lucide-react'
 
 import { BookGrid } from '#/components/book-grid'
 import { Button } from '#/components/ui/button'
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '#/components/ui/empty'
 import { Input } from '#/components/ui/input'
 import { listBooks, scanLibraryNow } from '#/lib/book-functions'
 import { cn } from '#/lib/utils'
@@ -42,12 +48,16 @@ function Library() {
         {user.role === 'admin' && <AdminActions />}
       </div>
       {shown.length === 0 ? (
-        <div className="mt-6 flex min-h-72 flex-col items-center justify-center gap-3 rounded-lg border border-dashed text-muted-foreground">
-          <BookOpen className="size-8" />
-          <p className="text-sm">
-            {books.length ? 'No matches' : 'No books yet'}
-          </p>
-        </div>
+        <Empty className="mt-6 min-h-72 border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <BookOpen />
+            </EmptyMedia>
+            <EmptyTitle>
+              {books.length ? 'No matches' : 'No books yet'}
+            </EmptyTitle>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <div className="mt-6">
           <BookGrid books={shown} />

@@ -13,6 +13,12 @@ import {
   AlertDialogTitle,
 } from '#/components/ui/alert-dialog'
 import { Button } from '#/components/ui/button'
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '#/components/ui/empty'
 import { Label } from '#/components/ui/label'
 import { Switch } from '#/components/ui/switch'
 import {
@@ -70,7 +76,12 @@ function Sync() {
       <div className={cn('grid gap-4', !enabled && 'opacity-50')}>
         <dl className="grid gap-4 rounded-lg border p-4 text-sm sm:grid-cols-[8rem_1fr] sm:items-center">
           <dt className="text-muted-foreground">
-            <label htmlFor="kosync-url">Server URL</label>
+            <Label
+              htmlFor="kosync-url"
+              className="font-normal text-muted-foreground"
+            >
+              Server URL
+            </Label>
           </dt>
           <dd>
             <CopyField id="kosync-url" value={url} />
@@ -84,10 +95,14 @@ function Sync() {
           </dd>
         </dl>
         {progress.length === 0 ? (
-          <div className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-lg border border-dashed text-muted-foreground">
-            <BookOpen className="size-8" />
-            <p className="text-sm">No synced books</p>
-          </div>
+          <Empty className="min-h-48 border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <BookOpen />
+              </EmptyMedia>
+              <EmptyTitle>No synced books</EmptyTitle>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <div className="rounded-lg border">
             <Table>
