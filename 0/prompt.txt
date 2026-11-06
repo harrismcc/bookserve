@@ -1,0 +1,45 @@
+So far this app has been made with a barebones UI and design language. We build it on shadcn/ui which has a good theme system and foundation, but it's simple.
+
+It's time to come up with a real design language for bookserve. Can you come up with 3 different versions?
+
+---
+
+I like reading room the best so far, earthtones, serif fonts, humanist design. It probably leans a little to far outside of software UI design though in some of the ways that text and spacing looks.
+
+Can you focus in on that iteration and give me some variations of that?
+
+---
+
+Okay lets lock in Serif Headings with the Moss color scheme. Implement it please!
+
+---
+
+Portal page review comments from harris:
+
+1. On https://t-03h6sky6cs564iooebypzh5d9-p20354.onamp.dev/
+   [1] Font sizes are too small up here overall. Actually overall everything seems small, are we doing something non standard here or am I just wigging out?
+
+   [1] Element: html > body > div.min-h-screen:nth-of-type(1) > header.border-b > div.mx-auto.flex
+       Element text: "Bookserve Library Market Settings admin"
+       Source: <AppShell>
+   Viewport: 1504×848
+
+2. On https://t-03h6sky6cs564iooebypzh5d9-p20354.onamp.dev/
+   [1] This looks odd, maybe an avatar needed or just a redesign
+
+   [1] Element: #radix-_r_0_
+       Element text: "admin"
+       Source: <Button>
+   Viewport: 1504×848
+
+3. On https://t-03h6sky6cs564iooebypzh5d9-p20354.onamp.dev/
+   [1] Buttons and stuff too boxy, I don't like the radius
+
+   [1] Element: html > body > div.min-h-screen:nth-of-type(1) > main.mx-auto.max-w-6xl > div.flex.flex-wrap:nth-of-type(1)
+       Element text: "Library Scan library Upload"
+       Source: <Library>
+   Viewport: 1504×848
+
+---
+
+When done, do a scan. We should be using shadcn/ui components wherever possible -- and importing them if we don't have the right ones already in the codebase. But AI loves to just cook up new components out of thin air, or jerry-rig existing components into a new use instead of bringing in a new one. Can you look for these situations and correct them? Maybe also need some edits in AGENTS.md to prevent it going forward
