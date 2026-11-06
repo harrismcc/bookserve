@@ -86,7 +86,7 @@ const LAYOUT =
 function Pending() {
   return (
     <main className={LAYOUT} aria-busy>
-      <div className="mx-auto aspect-[2/3] w-full max-w-56 animate-pulse rounded-md bg-muted sm:max-w-none" />
+      <div className="mx-auto aspect-[2/3] w-full max-w-56 animate-pulse rounded-cover bg-muted sm:max-w-none" />
       <div className="grid content-start gap-3 py-1">
         <div className="h-6 w-2/3 animate-pulse rounded bg-muted" />
         <div className="h-5 w-1/3 animate-pulse rounded bg-muted" />

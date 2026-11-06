@@ -226,7 +226,7 @@ function MatchFlow({ book, onDone }: { book: Book; onDone: () => void }) {
 }
 
 function Thumb({ url, className }: { url: string | null; className?: string }) {
-  const base = cn('aspect-[2/3] shrink-0 rounded-sm bg-muted', className)
+  const base = cn('aspect-[2/3] shrink-0 rounded-cover bg-muted', className)
   return url ? (
     <img src={url} alt="" loading="lazy" className={cn(base, 'object-cover')} />
   ) : (

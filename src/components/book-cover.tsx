@@ -21,7 +21,7 @@ function hue(text: string) {
 export function BookCover({ title, authors, coverUrl, className }: Props) {
   const [failed, setFailed] = useState<string | null>(null)
   const base = cn(
-    'aspect-[2/3] w-full overflow-hidden rounded-sm shadow-sm ring-1 ring-black/5',
+    'aspect-[2/3] w-full overflow-hidden rounded-cover shadow-sm ring-1 ring-black/5',
     className,
   )
   if (coverUrl && failed !== coverUrl) {

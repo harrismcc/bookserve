@@ -6,13 +6,14 @@ import {
   useLocation,
   useRouter,
 } from '@tanstack/react-router'
-import { ChevronDown, LogOut } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 
-import { Button } from '#/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '#/components/ui/dropdown-menu'
 import { authClient } from '#/lib/auth-client'
@@ -49,8 +50,8 @@ function AppShell() {
   return (
     <div className="min-h-screen">
       <header className="border-b">
-        <div className="mx-auto flex h-14 max-w-6xl items-center gap-8 px-4">
-          <Link to="/" className="font-serif text-lg font-semibold">
+        <div className="mx-auto flex h-16 max-w-6xl items-center gap-8 px-4">
+          <Link to="/" className="font-serif text-xl font-semibold">
             Bookserve
           </Link>
           <nav className="flex items-center gap-1 text-sm">
@@ -74,12 +75,21 @@ function AppShell() {
           </nav>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="ml-auto">
-                {user.username}
-                <ChevronDown />
-              </Button>
+              <button
+                aria-label="Account"
+                className="ml-auto grid size-9 place-items-center rounded-full bg-primary font-medium text-primary-foreground uppercase outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              >
+                {user.username[0]}
+              </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="min-w-44">
+              <DropdownMenuLabel className="font-normal">
+                <div className="font-medium">{user.username}</div>
+                <div className="text-xs text-muted-foreground capitalize">
+                  {user.role}
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={signOut}>
                 <LogOut />
                 Sign out

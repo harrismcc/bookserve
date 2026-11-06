@@ -53,7 +53,7 @@ export function DiscoverRowSkeleton({ grid }: { grid?: boolean }) {
       <ul className={cn(listClass(grid), 'overflow-hidden')}>
         {Array.from({ length: 6 }, (_, i) => (
           <li key={i} className={itemClass(grid)}>
-            <div className="aspect-[2/3] w-full rounded-md bg-muted" />
+            <div className="aspect-[2/3] w-full rounded-cover bg-muted" />
             <div className="mt-2 h-5 py-1">
               <div className="h-full w-4/5 rounded bg-muted" />
             </div>
