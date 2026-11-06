@@ -44,9 +44,20 @@ pnpm db:generate  # generate a migration from src/db/schema.ts
 pnpm db:migrate   # apply migrations
 ```
 
-Add shadcn components with `pnpm dlx shadcn@latest add <component>`.
+Add shadcn components with `pnpm dlx shadcn@latest add <component>`. The CLI mis-resolves the `#/` alias: after adding, make sure new files import `cn` from `#/lib/utils` (not `"cn"`), that no `cn` package was added to `package.json`, and that existing `src/components/ui/` files were not rewritten. Then run `pnpm format`.
 
 Use `pnpm db:generate` to create committed migrations for schema changes; don't rely on `db:push`, since self-hosted installs upgrade by running migrations on startup.
+
+## UI components
+
+Build UI from [shadcn/ui](https://ui.shadcn.com/docs/components) components in `src/components/ui/`.
+
+- Before writing markup for a UI element, check whether shadcn has a component for it (avatar, badge, empty state, skeleton, spinner, progress, item/list row, input group, table, label, tooltip, separator, tabs, sheet, and so on). If it does and it is not in `src/components/ui/` yet, add it with the CLI. Do not recreate it with `div`s and Tailwind classes.
+- Do not bend a component into a role it is not for, such as a `Button` styled as a tag or a `Card` used as a list row. Add the component that fits.
+- Customize a component at the call site with `className` and its variants. Edit a file in `src/components/ui/` only for an app-wide change, such as a theme decision.
+- Write a custom component (in `src/components/`) only for something shadcn does not cover, such as `BookCover`. Compose it from shadcn components where you can.
+- Style with the theme tokens in `src/styles.css` (`bg-primary`, `text-muted-foreground`, `rounded-md`, ...), never raw colors or pixel radii. Book covers use `rounded-cover`.
+- Headings (`h1`, `h2`, card titles) are set in the serif automatically; everything else is sans. Do not set fonts per element.
 
 ## Market integrations
 
